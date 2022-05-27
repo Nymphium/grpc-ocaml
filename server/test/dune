@@ -1,0 +1,15 @@
+(test
+ (name test)
+ (libraries grpc.server))
+
+(copy_files
+ (alias runtest)
+ (files ../../test/proto.proto))
+
+(rule
+ (alias runtest)
+ (target proto.ml)
+ (deps
+  (:proto proto.proto))
+ (action
+  (bash "protoc --ocaml_out=. -I . %{proto}")))

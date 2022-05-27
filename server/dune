@@ -1,0 +1,6 @@
+(library
+ (name grpc_server)
+ (public_name grpc.server)
+ (libraries grpc.basic core ocaml-protoc-plugin h2-lwt-unix hmap logs.lwt lwt.unix)
+ (preprocess
+  (pps ppx_deriving.std lwt_ppx)))

@@ -1,0 +1,9 @@
+{
+  "name": "grpc-mock-server",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@grpc/proto-loader": "0.6.12",
+    "grpc": "1.24.11"
+  }
+}

@@ -14,8 +14,8 @@ let
         {
           owner = "ocaml";
           repo = "opam-repository";
-          rev = "2de2614893192b1e81d00610a6c10294921e061e";
-          sha256 = "0wmjvc246czhny9i6lmhbpvnnm159fhxbqx1i8zjdr23qpl8wayd";
+          rev = "40f3586d6235b95c53ec3719ec6e95627b267598";
+          sha256 = "1yvkvj180a227j0r6q325kss0xw5akl0n22p7nka0sw8i9sws1i9";
         };
         src = (pkgs.fetchFromGitHub) fetch;
       };
@@ -27,6 +27,64 @@ in
   ocaml-version = "4.13.1";
   selection = 
   {
+    alcotest = 
+    {
+      pname = "alcotest";
+      version = "1.5.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/mirage/alcotest/releases/download/1.5.0/alcotest-js-1.5.0.tbz";
+        sha256 = "0v4ghia378g3l53r61fj98ljha0qxl82xp26y9frjy1dw03ija2l";
+      };
+      opamInputs = 
+      {
+        inherit (selection) uutf stdlib-shims re ocaml-syntax-shims ocaml fmt
+        dune cmdliner astring;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/alcotest/alcotest.1.5.0";
+        hash = "sha256:0jcss19ci02785h8g5pvjx18ig8vspkl90llvd0xmz8m903m0sjx";
+      };
+    };
+    angstrom = 
+    {
+      pname = "angstrom";
+      version = "0.15.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/inhabitedtype/angstrom/archive/0.15.0.tar.gz";
+        sha256 = "01cjjal8vjsm225v9y0q6ixam8k5f821rcr6yix6i9nzs84aq6gi";
+      };
+      opamInputs = 
+      {
+        inherit (selection) result ocaml-syntax-shims ocaml dune bigstringaf;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/angstrom/angstrom.0.15.0";
+        hash = "sha256:07ryik3g3hz79hnfdwxdh2jsw3cmbgygjs7mjdw07p927wkd83k9";
+      };
+    };
+    astring = 
+    {
+      pname = "astring";
+      version = "0.8.5";
+      src = pkgs.fetchurl 
+      {
+        url = "https://erratique.ch/software/astring/releases/astring-0.8.5.tbz";
+        sha256 = "1ykhg9gd3iy7zsgyiy2p9b1wkpqg9irw5pvcqs3sphq71iir4ml6";
+      };
+      opamInputs = 
+      {
+        inherit (selection) topkg ocamlfind ocamlbuild ocaml;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/astring/astring.0.8.5";
+        hash = "sha256:1djnad9sq12idlakj069xvwm2nn7wqm137pqbxxai5frkgi08x74";
+      };
+    };
     base = 
     {
       pname = "base";
@@ -44,6 +102,19 @@ in
       {
         package = "packages/base/base.v0.15.0";
         hash = "sha256:0q8a37jakmavnigwxnxykahrz4rvzm234ppnwmm0z1biimxp66yk";
+      };
+    };
+    base-bigarray = 
+    {
+      pname = "base-bigarray";
+      version = "base";
+      src = null;
+      opamInputs = {
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/base-bigarray/base-bigarray.base";
+        hash = "sha256:1hgfwxh4vdv21m2a4g506y27pcv912v67qi4svrn53rgc43ckv6b";
       };
     };
     base-bytes = 
@@ -86,6 +157,63 @@ in
         hash = "sha256:0mpsvb7684g723ylngryh15aqxg3blb7hgmq2fsqjyppr36iyzwg";
       };
     };
+    base64 = 
+    {
+      pname = "base64";
+      version = "3.5.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/mirage/ocaml-base64/releases/download/v3.5.0/base64-v3.5.0.tbz";
+        sha256 = "19735bvb3k263hzcvdhn4d5lfv2qscc9ib4q85wgxsvq0p0fk7aq";
+      };
+      opamInputs = {
+                     inherit (selection) ocaml dune;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/base64/base64.3.5.0";
+        hash = "sha256:1xlrmf6920bgsrzycmfp3c6nfylxvfq358cjnjglllh8aiwzsl83";
+      };
+    };
+    base_bigstring = 
+    {
+      pname = "base_bigstring";
+      version = "v0.15.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://ocaml.janestreet.com/ocaml-core/v0.15/files/base_bigstring-v0.15.0.tar.gz";
+        sha256 = "0syml7735f0slaw2p6asmgrs6bbzzyzy397b98jb10xgidsg2xgz";
+      };
+      opamInputs = 
+      {
+        inherit (selection) ppx_jane ocaml int_repr dune base;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/base_bigstring/base_bigstring.v0.15.0";
+        hash = "sha256:0l92waghxzr8n89dfz221vl12502h1h2kg8c1zsqjzqhcxqz8a5j";
+      };
+    };
+    base_quickcheck = 
+    {
+      pname = "base_quickcheck";
+      version = "v0.15.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://ocaml.janestreet.com/ocaml-core/v0.15/files/base_quickcheck-v0.15.0.tar.gz";
+        sha256 = "1wl107032kcd439p50yg7bk0wdv1fygcpzl8xhv8jfb06s7nn3in";
+      };
+      opamInputs = 
+      {
+        inherit (selection) splittable_random ppxlib ppx_sexp_value
+        ppx_sexp_message ppx_let ppx_fields_conv ppx_base ocaml dune base;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/base_quickcheck/base_quickcheck.v0.15.0";
+        hash = "sha256:1laa3xw5pbz6hsq711fpx86vh0b3jmzc28ahz6j57hs15b64c7vg";
+      };
+    };
     bigarray-compat = 
     {
       pname = "bigarray-compat";
@@ -104,14 +232,236 @@ in
         hash = "sha256:1hq7lmh99p720plkbv1faqqz2xz4ff9g49kkpsryg9ws3ld8ry05";
       };
     };
+    bigstringaf = 
+    {
+      pname = "bigstringaf";
+      version = "0.9.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/inhabitedtype/bigstringaf/archive/0.9.0.tar.gz";
+        sha256 = "0v0h09r0690b6b27ww443zxvj1dwhxcy86fbjaf2wm56kb3qccsl";
+      };
+      opamInputs = 
+      {
+        inherit (selection) ocaml dune
+        conf-pkg-config;
+        ocaml-freestanding = selection.ocaml-freestanding or null;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/bigstringaf/bigstringaf.0.9.0";
+        hash = "sha256:0g8fa097yzywbc453p7c4y62s90qh83by686av95ch9d2dw0kwgj";
+      };
+    };
+    bin_prot = 
+    {
+      pname = "bin_prot";
+      version = "v0.15.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://ocaml.janestreet.com/ocaml-core/v0.15/files/bin_prot-v0.15.0.tar.gz";
+        sha256 = "141nkl2qiwgii7biz074vrjbp6rsqkx9mx78nyf7xf6gxbda0jvs";
+      };
+      opamInputs = 
+      {
+        inherit (selection) ppx_variants_conv ppx_sexp_conv ppx_optcomp
+        ppx_fields_conv ppx_custom_printf ppx_compare ocaml dune
+        base;
+        mirage-xen-ocaml = selection.mirage-xen-ocaml or null;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/bin_prot/bin_prot.v0.15.0";
+        hash = "sha256:15p4b5lj44ds81i8xpnqsdvfgzha02c6z4jqdl3lkmvn4i0zrja2";
+      };
+    };
+    biniou = 
+    {
+      pname = "biniou";
+      version = "1.2.1";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/mjambon/biniou/releases/download/1.2.1/biniou-1.2.1.tbz";
+        sha256 = "0da3m0g0dhl02jfynrbysjh070xk2z6rxcx34xnqx6ljn5l6qm1m";
+      };
+      opamInputs = 
+      {
+        inherit (selection) ocaml easy-format dune;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/biniou/biniou.1.2.1";
+        hash = "sha256:1m9s9v4zr7022k6d50482qq7w41fdqp58nkpfhcp8574hg65kh69";
+      };
+    };
+    camomile = 
+    {
+      pname = "camomile";
+      version = "1.0.2";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/yoriyuki/Camomile/releases/download/1.0.2/camomile-1.0.2.tbz";
+        sha256 = "0chn7ldqb3wyf95yhmsxxq65cif56smgz1mhhc7m0dpwmyq1k97h";
+      };
+      opamInputs = {
+                     inherit (selection) ocaml dune;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/camomile/camomile.1.0.2";
+        hash = "sha256:08z0c35bcm72ch2n7w0b1x7xnwn2hhcky5r6vyz8hi4m9jqv6azv";
+      };
+    };
+    charInfo_width = 
+    {
+      pname = "charInfo_width";
+      version = "1.1.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/kandu/charInfo_width/archive/1.1.0.tar.gz";
+        sha256 = "0wl1hcwbx2mmgbhwh1wwgjixvppjq0k43nqyq13xm4pvgdxfvci1";
+      };
+      opamInputs = 
+      {
+        inherit (selection) result ocaml dune camomile;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/charInfo_width/charInfo_width.1.1.0";
+        hash = "sha256:09vmv2475qdv45x05hqbqcklyj80cjfk3c9qgyvardmkq7zl6ybj";
+      };
+    };
+    cmdliner = 
+    {
+      pname = "cmdliner";
+      version = "1.1.1";
+      src = pkgs.fetchurl 
+      {
+        url = "https://erratique.ch/software/cmdliner/releases/cmdliner-1.1.1.tbz";
+        sha256 = "1yxm4x34cbi06bfld601ds9drlbnyx0797ym3n6yyh4rlz1qgbm1";
+      };
+      opamInputs = {
+                     inherit (selection) ocaml;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/cmdliner/cmdliner.1.1.1";
+        hash = "sha256:0zp0q9213an1spx8ps70xlm9rhmjfqmixh59b3mb7dsj1r6p19i7";
+      };
+    };
+    conf-libssl = 
+    {
+      pname = "conf-libssl";
+      version = "4";
+      src = null;
+      opamInputs = {
+                     inherit (selection) conf-pkg-config;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/conf-libssl/conf-libssl.4";
+        hash = "sha256:16p7ivcaapxcwc1vcj0d2b7i82jkkv07w7xpckzjqc8gpvfhnqw6";
+      };
+      buildInputs = [ (pkgs.openssl) ];
+    };
+    conf-pkg-config = 
+    {
+      pname = "conf-pkg-config";
+      version = "2";
+      src = null;
+      opamInputs = {
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/conf-pkg-config/conf-pkg-config.2";
+        hash = "sha256:1rli6809glz5g9xwp4wsjidc39za4n58xcpkamy6fymfnqha225n";
+      };
+      buildInputs = [ (pkgs.pkgconfig) ];
+    };
+    conf-protoc = 
+    {
+      pname = "conf-protoc";
+      version = "1.0.0";
+      src = null;
+      opamInputs = {
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/conf-protoc/conf-protoc.1.0.0";
+        hash = "sha256:0f0hg06yj02jipa0qm4j9nwkimk7k88clsc9flvy9r30yp46wgmz";
+      };
+      buildInputs = [ (pkgs.libprotobuf-dev or null)
+                       (pkgs.libprotobuf-devel or null)
+                       (pkgs.protobuf or null)
+                       (pkgs.protobuf-compiler or null)
+                       (pkgs.protobuf-dev or null)
+                       (pkgs.protobuf-devel or null) ];
+    };
+    core = 
+    {
+      pname = "core";
+      version = "v0.15.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://ocaml.janestreet.com/ocaml-core/v0.15/files/core-v0.15.0.tar.gz";
+        sha256 = "07syx268zakascxjpvqmzqgd4qrjrvddi6j5lqnhbp85hqmnyr9s";
+      };
+      opamInputs = 
+      {
+        inherit (selection) variantslib typerep time_now stdio
+        splittable_random sexplib ppx_sexp_message ppx_sexp_conv ppx_jane
+        ppx_inline_test ppx_hash ppx_base ppx_assert ocaml jst-config
+        jane-street-headers fieldslib dune bin_prot base_quickcheck
+        base_bigstring base;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/core/core.v0.15.0";
+        hash = "sha256:0dwln7w87g7xvlcjgyzww1p4cpzcdlvd3ksi51g3a9489jkwyy6n";
+      };
+    };
+    core_kernel = 
+    {
+      pname = "core_kernel";
+      version = "v0.15.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://ocaml.janestreet.com/ocaml-core/v0.15/files/core_kernel-v0.15.0.tar.gz";
+        sha256 = "1h0na5sg2w6f923r3bqg64yhdmvpqrfcn5mdwj86nz022s7ji81l";
+      };
+      opamInputs = 
+      {
+        inherit (selection) ppx_jane ocaml int_repr dune core base-threads
+        base;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/core_kernel/core_kernel.v0.15.0";
+        hash = "sha256:112n0nw2bjz03scwlrk6qabyxv3bmsxngl2jdpnijw01b2wc0yh3";
+      };
+    };
+    core_unix = 
+    {
+      pname = "core_unix";
+      version = "v0.15.0";
+      src = self.directSrc "core_unix";
+      opamInputs = 
+      {
+        inherit (selection) timezone spawn sexplib ppx_jane ocaml_intrinsics
+        ocaml jst-config jane-street-headers expect_test_helpers_core dune
+        core_kernel core base-threads;
+      };
+      opamSrc = "core_unix.opam";
+      buildInputs = [ (pkgs.linux-headers or null) ];
+    };
     cppo = 
     {
       pname = "cppo";
-      version = "1.6.8";
+      version = "1.6.9";
       src = pkgs.fetchurl 
       {
-        url = "https://github.com/ocaml-community/cppo/archive/v1.6.8.tar.gz";
-        sha256 = "0lxy4xkkkwgs1cj6d9lyzsqi9f6fc9r6cir5imi7yjqrpd86s1by";
+        url = "https://github.com/ocaml-community/cppo/archive/v1.6.9.tar.gz";
+        sha256 = "0sm2vn5y7w7fyrwkv7f86y4nvs5vsrqy1x2nidy0lcqxq62ns0qn";
       };
       opamInputs = 
       {
@@ -119,8 +469,8 @@ in
       };
       opamSrc = repoPath (repos.opam-repository.src) 
       {
-        package = "packages/cppo/cppo.1.6.8";
-        hash = "sha256:0pzd8irqkkkpfgw8nq9d21z9rj5m3qlzixyb7ybfy4b1fwh3n8bp";
+        package = "packages/cppo/cppo.1.6.9";
+        hash = "sha256:19i6yqv9lq09v3xw1sfqayh40sihhd4hfyvk9dwz1m5dv1g63xlp";
       };
     };
     csexp = 
@@ -163,34 +513,443 @@ in
         hash = "sha256:1ik4iy7xfwyk7f6ywqza6ckwk736f4mgp6q18jnazcrnk56md5wx";
       };
     };
+    dune-build-info = 
+    {
+      pname = "dune-build-info";
+      version = "3.2.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/ocaml/dune/releases/download/3.2.0/chrome-trace-3.2.0.tbz";
+        sha256 = "1g6m3a5b1nhvrxw5agzmng7ayy1rwbib56x8dyr1xvbrmvkbq7xx";
+      };
+      opamInputs = {
+                     inherit (selection) ocaml dune;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/dune-build-info/dune-build-info.3.2.0";
+        hash = "sha256:14m1yvk5syqjr48jsj8696gk802zzbq7alkgmqf0frjpyscaw6h1";
+      };
+    };
     dune-configurator = 
     {
       pname = "dune-configurator";
-      version = "3.1.1";
+      version = "3.2.0";
       src = pkgs.fetchurl 
       {
-        url = "https://github.com/ocaml/dune/releases/download/3.1.1/fiber-3.1.1.tbz";
-        sha256 = "0q3bbarnkxglypw2w4rccs9fn093dgn0jdc7qx08i68vmda48j02";
+        url = "https://github.com/ocaml/dune/releases/download/3.2.0/chrome-trace-3.2.0.tbz";
+        sha256 = "1g6m3a5b1nhvrxw5agzmng7ayy1rwbib56x8dyr1xvbrmvkbq7xx";
       };
       opamInputs = {
                      inherit (selection) ocaml dune csexp;
       };
       opamSrc = repoPath (repos.opam-repository.src) 
       {
-        package = "packages/dune-configurator/dune-configurator.3.1.1";
-        hash = "sha256:1hbj4q7kdnjd5ankmm8k2yj5psn9nnf445ajb8yb3adfxiwjhzvm";
+        package = "packages/dune-configurator/dune-configurator.3.2.0";
+        hash = "sha256:0658amxrfkxa7h7sx13lks7k2kpcq39mavx2jy8hnyg047jzn848";
       };
     };
-    it-is-test = 
+    dune-rpc = 
     {
-      pname = "it-is-test";
-      version = "0.0.0";
-      src = self.directSrc "it-is-test";
+      pname = "dune-rpc";
+      version = "3.2.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/ocaml/dune/releases/download/3.2.0/chrome-trace-3.2.0.tbz";
+        sha256 = "1g6m3a5b1nhvrxw5agzmng7ayy1rwbib56x8dyr1xvbrmvkbq7xx";
+      };
       opamInputs = 
       {
-        inherit (selection) ocaml lwt dune;
+        inherit (selection) xdg stdune pp ordering dyn dune csexp;
       };
-      opamSrc = "it-is-test.opam";
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/dune-rpc/dune-rpc.3.2.0";
+        hash = "sha256:1s87v583h3jdknf52wd0vgazv0pbq35f8nsc4ngy1wfw4kanqsvc";
+      };
+    };
+    dyn = 
+    {
+      pname = "dyn";
+      version = "3.2.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/ocaml/dune/releases/download/3.2.0/chrome-trace-3.2.0.tbz";
+        sha256 = "1g6m3a5b1nhvrxw5agzmng7ayy1rwbib56x8dyr1xvbrmvkbq7xx";
+      };
+      opamInputs = 
+      {
+        inherit (selection) pp ordering ocaml dune;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/dyn/dyn.3.2.0";
+        hash = "sha256:0m39b0vwbp08dy264sjips0psskga0nab2pbl519clbina830wz6";
+      };
+    };
+    easy-format = 
+    {
+      pname = "easy-format";
+      version = "1.3.3";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/mjambon/easy-format/releases/download/1.3.3/easy-format-1.3.3.tbz";
+        sha256 = "05n4mm1yz33h9gw811ivjw7x4m26lpmf7kns9lza4v6227lwmz7a";
+      };
+      opamInputs = {
+                     inherit (selection) ocaml dune;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/easy-format/easy-format.1.3.3";
+        hash = "sha256:0w8bsfr039gbpz0abdarfy4bnz224zr134abw5i6n4lppqd83csf";
+      };
+    };
+    expect_test_helpers_core = 
+    {
+      pname = "expect_test_helpers_core";
+      version = "v0.15.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://ocaml.janestreet.com/ocaml-core/v0.15/files/expect_test_helpers_core-v0.15.0.tar.gz";
+        sha256 = "0llnzx90qp1yydx4rg3fgd29wqfi92jrsvw1pp434gi5cj2p6akz";
+      };
+      opamInputs = 
+      {
+        inherit (selection) stdio sexp_pretty re ppx_jane ocaml dune core
+        base_quickcheck base;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/expect_test_helpers_core/expect_test_helpers_core.v0.15.0";
+        hash = "sha256:00ff3q9yc3cz2azaqjvdq615s0zzx7sab5z7s80jk1mzpa041zwn";
+      };
+    };
+    faraday = 
+    {
+      pname = "faraday";
+      version = "0.8.1";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/inhabitedtype/faraday/archive/0.8.1.tar.gz";
+        sha256 = "0yngavdplaaw5lb4ci4v4y5nvlhgan0mg1dlx1b5qdjgr83dk7cf";
+      };
+      opamInputs = 
+      {
+        inherit (selection) ocaml dune bigstringaf;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/faraday/faraday.0.8.1";
+        hash = "sha256:1gk9zcifglbfnkjhndd96xf6bfp5ldmrpvvy3daidfd07l56vr96";
+      };
+    };
+    faraday-lwt = 
+    {
+      pname = "faraday-lwt";
+      version = "0.8.1";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/inhabitedtype/faraday/archive/0.8.1.tar.gz";
+        sha256 = "0yngavdplaaw5lb4ci4v4y5nvlhgan0mg1dlx1b5qdjgr83dk7cf";
+      };
+      opamInputs = 
+      {
+        inherit (selection) ocaml lwt faraday dune;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/faraday-lwt/faraday-lwt.0.8.1";
+        hash = "sha256:14nrlva43l45wp71rbyk2fb9nk43krqp292wzrlmc8ip19pc8y9p";
+      };
+    };
+    faraday-lwt-unix = 
+    {
+      pname = "faraday-lwt-unix";
+      version = "0.8.1";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/inhabitedtype/faraday/archive/0.8.1.tar.gz";
+        sha256 = "0yngavdplaaw5lb4ci4v4y5nvlhgan0mg1dlx1b5qdjgr83dk7cf";
+      };
+      opamInputs = 
+      {
+        inherit (selection) ocaml lwt faraday-lwt dune base-unix;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/faraday-lwt-unix/faraday-lwt-unix.0.8.1";
+        hash = "sha256:1zfzrrbfdvw4mbmp5alkv8bmhcsfr5nillb2nj6p49fab347182m";
+      };
+    };
+    fiber = 
+    {
+      pname = "fiber";
+      version = "3.2.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/ocaml/dune/releases/download/3.2.0/chrome-trace-3.2.0.tbz";
+        sha256 = "1g6m3a5b1nhvrxw5agzmng7ayy1rwbib56x8dyr1xvbrmvkbq7xx";
+      };
+      opamInputs = 
+      {
+        inherit (selection) stdune ocaml dyn dune;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/fiber/fiber.3.2.0";
+        hash = "sha256:1qvb2awh1qlfcwwjdg73jbm5adhzpqdwbq8ipjmy7mybyl8whw79";
+      };
+    };
+    fieldslib = 
+    {
+      pname = "fieldslib";
+      version = "v0.15.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://ocaml.janestreet.com/ocaml-core/v0.15/files/fieldslib-v0.15.0.tar.gz";
+        sha256 = "083izf854vzmi5zj63r7ipjf09y1dqf7iy8n6r4663444xrzs2h5";
+      };
+      opamInputs = {
+                     inherit (selection) ocaml dune base;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/fieldslib/fieldslib.v0.15.0";
+        hash = "sha256:0h80yc0k983q2kxbg60xd7rm84xlp9hpnwnqq8q0w5csc7vpn6cc";
+      };
+    };
+    fmt = 
+    {
+      pname = "fmt";
+      version = "0.9.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://erratique.ch/software/fmt/releases/fmt-0.9.0.tbz";
+        sha256 = "0q8j2in2473xh7k4hfgnppv9qy77f2ih89yp6yhpbp92ba021yzi";
+      };
+      opamInputs = 
+      {
+        inherit (selection) topkg ocamlfind ocamlbuild
+        ocaml;
+        cmdliner = selection.cmdliner or null;
+        base-unix = selection.base-unix or null;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/fmt/fmt.0.9.0";
+        hash = "sha256:1czh5i3i4mkf9xfasji3v7n821qmnnandlklh67ali0x87brldny";
+      };
+    };
+    gluten = 
+    {
+      pname = "gluten";
+      version = "0.2.1";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/anmonteiro/gluten/releases/download/0.2.1/gluten-0.2.1.tbz";
+        sha256 = "1pl0mpcprz8hmaiv28p7w51qfcx7s76zdkak0vm5cazbjl38nc46";
+      };
+      opamInputs = 
+      {
+        inherit (selection) ocaml faraday dune bigstringaf;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/gluten/gluten.0.2.1";
+        hash = "sha256:0g0mr0h4v1z3mkn5n6i3cwghg2i6jlqf05lkxn1mh1ynn5vq168h";
+      };
+    };
+    gluten-lwt = 
+    {
+      pname = "gluten-lwt";
+      version = "0.2.1";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/anmonteiro/gluten/releases/download/0.2.1/gluten-0.2.1.tbz";
+        sha256 = "1pl0mpcprz8hmaiv28p7w51qfcx7s76zdkak0vm5cazbjl38nc46";
+      };
+      opamInputs = 
+      {
+        inherit (selection) ocaml lwt gluten dune;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/gluten-lwt/gluten-lwt.0.2.1";
+        hash = "sha256:18pz9yfyw0s07mswvvdz173wf58922nygy24j0b6j501gjxb7ps5";
+      };
+    };
+    gluten-lwt-unix = 
+    {
+      pname = "gluten-lwt-unix";
+      version = "0.2.1";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/anmonteiro/gluten/releases/download/0.2.1/gluten-0.2.1.tbz";
+        sha256 = "1pl0mpcprz8hmaiv28p7w51qfcx7s76zdkak0vm5cazbjl38nc46";
+      };
+      opamInputs = 
+      {
+        inherit (selection) ocaml lwt gluten-lwt gluten faraday-lwt-unix
+        dune;
+        tls = selection.tls or null;
+        lwt_ssl = selection.lwt_ssl or null;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/gluten-lwt-unix/gluten-lwt-unix.0.2.1";
+        hash = "sha256:0xf63j3503mqmf6n575d4m3mrf2x2qw3as8cx7hc2jc7zfqrygh0";
+      };
+    };
+    grpc = 
+    {
+      pname = "grpc";
+      version = "0.0.0";
+      src = self.directSrc "grpc";
+      opamInputs = 
+      {
+        inherit (selection) uri ppx_yojson_conv ppx_let ppx_deriving
+        ocaml-protoc-plugin ocaml lwt_ssl lwt_ppx lwt logs hmap h2-lwt-unix
+        dune core_unix core;
+      };
+      opamSrc = "grpc.opam";
+    };
+    h2 = 
+    {
+      pname = "h2";
+      version = "0.8.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/anmonteiro/ocaml-h2/releases/download/0.8.0/h2-0.8.0.tbz";
+        sha256 = "0qcn3yvyz0h419fjg9nb20csfmwmh3ihz0zb0jfzdycf5w4mlry6";
+      };
+      opamInputs = 
+      {
+        inherit (selection) psq ocaml httpaf hpack faraday dune bigstringaf
+        base64 angstrom;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/h2/h2.0.8.0";
+        hash = "sha256:0pvfyk6zp8d696g15ixq1fjq6rp90lzgzl74vlpsckax0i7lwj66";
+      };
+    };
+    h2-lwt = 
+    {
+      pname = "h2-lwt";
+      version = "0.8.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/anmonteiro/ocaml-h2/releases/download/0.8.0/h2-0.8.0.tbz";
+        sha256 = "0qcn3yvyz0h419fjg9nb20csfmwmh3ihz0zb0jfzdycf5w4mlry6";
+      };
+      opamInputs = 
+      {
+        inherit (selection) ocaml lwt h2 gluten-lwt dune;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/h2-lwt/h2-lwt.0.8.0";
+        hash = "sha256:0hf3jgpbgawkridwnc442vpxllpg5c65nnyaz41b35s1v3kh099c";
+      };
+    };
+    h2-lwt-unix = 
+    {
+      pname = "h2-lwt-unix";
+      version = "0.8.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/anmonteiro/ocaml-h2/releases/download/0.8.0/h2-0.8.0.tbz";
+        sha256 = "0qcn3yvyz0h419fjg9nb20csfmwmh3ihz0zb0jfzdycf5w4mlry6";
+      };
+      opamInputs = 
+      {
+        inherit (selection) ocaml lwt h2-lwt gluten-lwt-unix faraday-lwt-unix
+        dune;
+        tls = selection.tls or null;
+        lwt_ssl = selection.lwt_ssl or null;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/h2-lwt-unix/h2-lwt-unix.0.8.0";
+        hash = "sha256:0sar9a8df3q4fxvv0wvblafnxqbv15cwzxmr9rhc3d99fvma1hbc";
+      };
+    };
+    hmap = 
+    {
+      pname = "hmap";
+      version = "0.8.1";
+      src = pkgs.fetchurl 
+      {
+        url = "http://erratique.ch/software/hmap/releases/hmap-0.8.1.tbz";
+        sha256 = "10xyjy4ab87z7jnghy0wnla9wrmazgyhdwhr4hdmxxdn28dxn03a";
+      };
+      opamInputs = 
+      {
+        inherit (selection) topkg ocamlfind ocamlbuild ocaml;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/hmap/hmap.0.8.1";
+        hash = "sha256:19yc0fm5c0wzxyrwfy3bcb6yh3hbgwrhhh94ggzjs7di8vv9bkv1";
+      };
+    };
+    hpack = 
+    {
+      pname = "hpack";
+      version = "0.2.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/anmonteiro/ocaml-h2/releases/download/0.2.0/h2-0.2.0.tbz";
+        sha256 = "1rkbw1x4sviwccy9f7yymb4ncvamjyl3cl1hp4i43bg96i4zs4l5";
+      };
+      opamInputs = 
+      {
+        inherit (selection) ocaml faraday dune angstrom;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/hpack/hpack.0.2.0";
+        hash = "sha256:00ynpj4gf0z8m160dakd6wcf5xzrczawjajk3aa2im2czrnnx7ld";
+      };
+    };
+    httpaf = 
+    {
+      pname = "httpaf";
+      version = "0.7.1";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/inhabitedtype/httpaf/archive/0.7.1.tar.gz";
+        sha256 = "19baxlf0kmhc5dnpz9962wp41yxj0gsi6893pqqkkc54wbs9fbpa";
+      };
+      opamInputs = 
+      {
+        inherit (selection) result ocaml faraday dune bigstringaf angstrom;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/httpaf/httpaf.0.7.1";
+        hash = "sha256:0nspp565d3xylf27vmzxq8015yq26pi6xjhw1zal607qbg29b4yl";
+      };
+    };
+    int_repr = 
+    {
+      pname = "int_repr";
+      version = "v0.15.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://ocaml.janestreet.com/ocaml-core/v0.15/files/int_repr-v0.15.0.tar.gz";
+        sha256 = "06b7xp0v3s1jmf1bkjj2dyiwmk3ffbyglb1g8f1s3jjbj5c7ndax";
+      };
+      opamInputs = 
+      {
+        inherit (selection) ppx_jane ocaml dune base;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/int_repr/int_repr.v0.15.0";
+        hash = "sha256:1l5fkljdys8cd6wca7vwsgnmiqj12kgirlsx09j3y49w2w0y35ag";
+      };
     };
     jane-street-headers = 
     {
@@ -229,6 +988,51 @@ in
         hash = "sha256:03px4smpvwvqcvdn38jyjcfb2q41qpcgcyi8pj9ig7a76hzm5hrv";
       };
     };
+    lambda-term = 
+    {
+      pname = "lambda-term";
+      version = "3.2.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/ocaml-community/lambda-term/releases/download/3.2.0/lambda-term-3.2.0.tar.gz";
+        sha256 = "1brcqy4kaxki6f865fcqp2bh75wi7qg9s30z2p5b5nlk4qiag8k0";
+      };
+      opamInputs = 
+      {
+        inherit (selection) zed react ocaml mew_vi lwt_react lwt_log lwt dune
+        camomile;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/lambda-term/lambda-term.3.2.0";
+        hash = "sha256:1lpsxym2pv2wdnykgjs620h5yc1jq279yq6j1185kk6a5p8r7kh6";
+      };
+    };
+    logs = 
+    {
+      pname = "logs";
+      version = "0.7.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://erratique.ch/software/logs/releases/logs-0.7.0.tbz";
+        sha256 = "1jnmd675wmsmdwyb5mx5b0ac66g4c6gpv5s4mrx2j6pb0wla1x46";
+      };
+      opamInputs = 
+      {
+        inherit (selection) topkg ocamlfind ocamlbuild
+        ocaml;
+        lwt = selection.lwt or null;
+        js_of_ocaml = selection.js_of_ocaml or null;
+        fmt = selection.fmt or null;
+        cmdliner = selection.cmdliner or null;
+        base-threads = selection.base-threads or null;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/logs/logs.0.7.0";
+        hash = "sha256:0pys6d25bghrwvwd4gflib2yyp5fvdy0rkivbdyli5dmp5j35a3n";
+      };
+    };
     lwt = 
     {
       pname = "lwt";
@@ -254,6 +1058,119 @@ in
         hash = "sha256:1gqprnl0g4fbj4s8d19dwf4x4hpnmf4pwvyrhkp0gjyy0m2i2lnl";
       };
     };
+    lwt_log = 
+    {
+      pname = "lwt_log";
+      version = "1.1.1";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/aantron/lwt_log/archive/1.1.1.tar.gz";
+        sha256 = "0gszc8nvk2hpfq47plb36qahlnyfq28sa9mhicnf6mg5c7n1kyql";
+      };
+      opamInputs = {
+                     inherit (selection) lwt dune;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/lwt_log/lwt_log.1.1.1";
+        hash = "sha256:18iddwpvs7hwkmsbii11kiw0aaad4kf8iv9vjw01npflxh729vig";
+      };
+    };
+    lwt_ppx = 
+    {
+      pname = "lwt_ppx";
+      version = "2.0.3";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/ocsigen/lwt/archive/refs/tags/5.5.0.tar.gz";
+        sha256 = "15gr6nhhfjyh91v9chvm6j7vnp1hhc60y3plgvcgl5yl5k7xbbj9";
+      };
+      opamInputs = 
+      {
+        inherit (selection) ppxlib ocaml lwt dune;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/lwt_ppx/lwt_ppx.2.0.3";
+        hash = "sha256:11q418mj2zp6dd0wf296j1yf5rxf8hz9ggscdsg112icsgk2z32p";
+      };
+    };
+    lwt_react = 
+    {
+      pname = "lwt_react";
+      version = "1.1.5";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/ocsigen/lwt/archive/refs/tags/5.5.0.tar.gz";
+        sha256 = "15gr6nhhfjyh91v9chvm6j7vnp1hhc60y3plgvcgl5yl5k7xbbj9";
+      };
+      opamInputs = 
+      {
+        inherit (selection) react ocaml lwt dune;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/lwt_react/lwt_react.1.1.5";
+        hash = "sha256:1k0ysm1wdx55dzma6k1ifx0s09ijxg7jvjh2ak5l540lbjx30cf2";
+      };
+    };
+    lwt_ssl = 
+    {
+      pname = "lwt_ssl";
+      version = "1.1.3";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/ocsigen/lwt_ssl/archive/1.1.3.tar.gz";
+        sha256 = "0dxxkif4a667ndk14sn8ka4x4gck0gvw4sc12jb84rcq5k15jlkp";
+      };
+      opamInputs = 
+      {
+        inherit (selection) ssl ocaml lwt dune base-unix;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/lwt_ssl/lwt_ssl.1.1.3";
+        hash = "sha256:1fri84nnlgq0zcmmr2hk19hj8a1d2wg98p41vyq27nj6wmg6h2r2";
+      };
+    };
+    mew = 
+    {
+      pname = "mew";
+      version = "0.1.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/kandu/mew/archive/0.1.0.tar.gz";
+        sha256 = "1rjri9mgfb9gn9fmjn0ax21y9jd9wkvr7mmx2jrlqmzgabmqrlv4";
+      };
+      opamInputs = 
+      {
+        inherit (selection) trie result ocaml dune;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/mew/mew.0.1.0";
+        hash = "sha256:0g9xms016f909fzbwgxcy0k4xmvr5zk5bhnz66v9vpsiak2qm4s3";
+      };
+    };
+    mew_vi = 
+    {
+      pname = "mew_vi";
+      version = "0.5.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/kandu/mew_vi/archive/0.5.0.tar.gz";
+        sha256 = "1nmg3cysglgw4115n5zpz4azrfbnfxkn2kvw73chzs69viygm4m6";
+      };
+      opamInputs = 
+      {
+        inherit (selection) react ocaml mew dune;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/mew_vi/mew_vi.0.5.0";
+        hash = "sha256:0zsfhxpff78cqk2c81parajb59m7hqf6v8arksxbyfha6mls65hz";
+      };
+    };
     mmap = 
     {
       pname = "mmap";
@@ -271,6 +1188,24 @@ in
       {
         package = "packages/mmap/mmap.1.2.0";
         hash = "sha256:0sh05spdbmikba0zrv2gwhmyw1v8nsnnf7i7rhlg1iim0ydbqni0";
+      };
+    };
+    num = 
+    {
+      pname = "num";
+      version = "1.4";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/ocaml/num/archive/v1.4.tar.gz";
+        sha256 = "090gl27g84r3s2b12vgkz8fp269jqlrhx4lpg7008yviisv8hl01";
+      };
+      opamInputs = {
+                     inherit (selection) ocamlfind ocaml;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/num/num.1.4";
+        hash = "sha256:0q683bfsbw9k3vzzxpnjv2sgjdas97aybqz19acnm14ihnalbzm2";
       };
     };
     ocaml = 
@@ -344,6 +1279,93 @@ in
         hash = "sha256:0h0hgqq9mbywvqygppfdc50gf9ss8a97l4dgsv3hszmzh6gglgrg";
       };
     };
+    ocaml-lsp-server = 
+    {
+      pname = "ocaml-lsp-server";
+      version = "1.10.5";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/ocaml/ocaml-lsp/releases/download/1.10.5/jsonrpc-1.10.5.tbz";
+        sha256 = "1k0d8cq8pn3jn2lahp3v7plqhia9wzd6m3gm7rb6ifbbvpm55qjd";
+      };
+      opamInputs = 
+      {
+        inherit (selection) yojson xdg uutf stdune spawn re
+        ppx_yojson_conv_lib pp ordering omd octavius ocamlformat-rpc-lib
+        ocaml fiber dyn dune-rpc dune-build-info dune csexp;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/ocaml-lsp-server/ocaml-lsp-server.1.10.5";
+        hash = "sha256:159g0f66j1rjmp57cv5rinf7qajnj6kqimhn0q6008nag3l94fq4";
+      };
+    };
+    ocaml-protoc-plugin = 
+    {
+      pname = "ocaml-protoc-plugin";
+      version = "development";
+      src = self.directSrc "ocaml-protoc-plugin";
+      opamInputs = 
+      {
+        inherit (selection) ocaml dune conf-protoc conf-pkg-config;
+      };
+      opamSrc = "ocaml-protoc-plugin.opam";
+    };
+    ocaml-syntax-shims = 
+    {
+      pname = "ocaml-syntax-shims";
+      version = "1.0.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/ocaml-ppx/ocaml-syntax-shims/releases/download/1.0.0/ocaml-syntax-shims-1.0.0.tbz";
+        sha256 = "1j7848khli4p7j8i2kmnvhdnhcwhy3zgdpf5ds5ic30ax69y3cl9";
+      };
+      opamInputs = {
+                     inherit (selection) ocaml dune;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/ocaml-syntax-shims/ocaml-syntax-shims.1.0.0";
+        hash = "sha256:0qnm1db0298yqcn6j9fmb0l4gr5nhcar8plskj39917invyamgd2";
+      };
+    };
+    ocaml_intrinsics = 
+    {
+      pname = "ocaml_intrinsics";
+      version = "v0.15.2";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/janestreet/ocaml_intrinsics/archive/refs/tags/v0.15.2.tar.gz";
+        sha256 = "1jm5bjgbdhlkna7x7di975f50l4n1bnanaad9za585mzrrzll1lj";
+      };
+      opamInputs = 
+      {
+        inherit (selection) ocaml dune-configurator dune;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/ocaml_intrinsics/ocaml_intrinsics.v0.15.2";
+        hash = "sha256:156lpv9z7fzavvgxzqwbv7rz1ay4ffdzwqka6gaghx8phbnl223y";
+      };
+    };
+    ocamlbuild = 
+    {
+      pname = "ocamlbuild";
+      version = "0.14.1";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/ocaml/ocamlbuild/archive/refs/tags/0.14.1.tar.gz";
+        sha256 = "0ml2y3dqhhbwlf94l3jgz6gfhhfp41qaf1sjm8p8c37q1vzpj4jf";
+      };
+      opamInputs = {
+                     inherit (selection) ocaml;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/ocamlbuild/ocamlbuild.0.14.1";
+        hash = "sha256:04ws6wbbsv56r4b6f29514inn77d91gb6sa8z62bxkswk1s1r1fn";
+      };
+    };
     ocamlfind = 
     {
       pname = "ocamlfind";
@@ -364,6 +1386,24 @@ in
         hash = "sha256:1wq1lkw3rpgilprlakznsxxf60mcidn3fzi3vjrgjdrnnp9hvh19";
       };
     };
+    ocamlformat-rpc-lib = 
+    {
+      pname = "ocamlformat-rpc-lib";
+      version = "0.22.4";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/ocaml-ppx/ocamlformat/releases/download/0.22.4/ocamlformat-0.22.4.tbz";
+        sha256 = "0q60r7bdl6x9ksbfz8yggxripa4inf0dr9w1ipkc4z5ch4mxwm7b";
+      };
+      opamInputs = {
+                     inherit (selection) ocaml dune csexp;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/ocamlformat-rpc-lib/ocamlformat-rpc-lib.0.22.4";
+        hash = "sha256:1ac63q43qia5s48ds60xvy4w93axr3c4fmwd5myg1ix1xmj7z6fv";
+      };
+    };
     ocplib-endian = 
     {
       pname = "ocplib-endian";
@@ -381,6 +1421,99 @@ in
       {
         package = "packages/ocplib-endian/ocplib-endian.1.2";
         hash = "sha256:1jldvb471gyhkrzwfvqg722l3a8dc37hhhyas66skjzfmqyi2pnh";
+      };
+    };
+    octavius = 
+    {
+      pname = "octavius";
+      version = "1.2.2";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/ocaml-doc/octavius/archive/v1.2.2.tar.gz";
+        sha256 = "1bg0fcm7haqxvx5wx2cci0mbbq0gf1vw9fa4kkd6jsriw1611jga";
+      };
+      opamInputs = {
+                     inherit (selection) ocaml dune;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/octavius/octavius.1.2.2";
+        hash = "sha256:0bagilkanfjyi56hrk9dw43xs6zry9p8n3l55r3d58v5hz2xsbwl";
+      };
+    };
+    omd = 
+    {
+      pname = "omd";
+      version = "1.3.1";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/Chris00/omd/releases/download/1.3.1/omd-1.3.1.tar.gz";
+        sha256 = "1sgdgzpx96br7npj8mh91cli5mqmzsjpngwm7x4212n3k1d0ivwa";
+      };
+      opamInputs = 
+      {
+        inherit (selection) ocamlfind ocamlbuild ocaml base-bytes
+        base-bigarray;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/omd/omd.1.3.1";
+        hash = "sha256:09fzyagdfcj1b2bwj5hacbda9lldicd0a59sac5j5nls8x8rsgcc";
+      };
+    };
+    ordering = 
+    {
+      pname = "ordering";
+      version = "3.2.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/ocaml/dune/releases/download/3.2.0/chrome-trace-3.2.0.tbz";
+        sha256 = "1g6m3a5b1nhvrxw5agzmng7ayy1rwbib56x8dyr1xvbrmvkbq7xx";
+      };
+      opamInputs = {
+                     inherit (selection) ocaml dune;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/ordering/ordering.3.2.0";
+        hash = "sha256:1zaqxm6xfdr1g49a0q9xw604lhqdcw06sl2qvkc8my5hcz5m3xf5";
+      };
+    };
+    parsexp = 
+    {
+      pname = "parsexp";
+      version = "v0.15.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://ocaml.janestreet.com/ocaml-core/v0.15/files/parsexp-v0.15.0.tar.gz";
+        sha256 = "14yi8dnmpkp52i44aa2knw7m6ib8s285j0k3i240qz5c28mr1vni";
+      };
+      opamInputs = 
+      {
+        inherit (selection) sexplib0 ocaml dune base;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/parsexp/parsexp.v0.15.0";
+        hash = "sha256:0iplx26dvqbnp03ivh18gvak7l7khnklw2gfvr6yi3nmkdpgvvn2";
+      };
+    };
+    pp = 
+    {
+      pname = "pp";
+      version = "1.1.2";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/ocaml-dune/pp/releases/download/1.1.2/pp-1.1.2.tbz";
+        sha256 = "0mhxmzsraid4yw18zr6pyjfrhvf873ls8vfd1yapdfxijs6yk974";
+      };
+      opamInputs = {
+                     inherit (selection) ocaml dune;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/pp/pp.1.1.2";
+        hash = "sha256:1mdh8npl8ma5ypafp6bzhjxim2if3ygny7nm0rb5689x40b1c83b";
       };
     };
     ppx_assert = 
@@ -423,6 +1556,44 @@ in
         hash = "sha256:0ilg603nkmn7mzvasyibhyalgw92w4lfgwpgwhwk7z50yrw3dqb7";
       };
     };
+    ppx_bench = 
+    {
+      pname = "ppx_bench";
+      version = "v0.15.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://ocaml.janestreet.com/ocaml-core/v0.15/files/ppx_bench-v0.15.0.tar.gz";
+        sha256 = "0zp1qal278g9ccqhvgym7qk3gybd43d55qgcxkxp6wnd7qncg25i";
+      };
+      opamInputs = 
+      {
+        inherit (selection) ppxlib ppx_inline_test ocaml dune;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/ppx_bench/ppx_bench.v0.15.0";
+        hash = "sha256:15hd8qckij64lc133vdxnr5z87yy4zyg4d5fr0mvqkqadxdhchlk";
+      };
+    };
+    ppx_bin_prot = 
+    {
+      pname = "ppx_bin_prot";
+      version = "v0.15.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://ocaml.janestreet.com/ocaml-core/v0.15/files/ppx_bin_prot-v0.15.0.tar.gz";
+        sha256 = "04s02l8124qdcyw1haha29rnqhg02aw16ilqj5gsx8yr24ifdj5j";
+      };
+      opamInputs = 
+      {
+        inherit (selection) ppxlib ppx_here ocaml dune bin_prot base;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/ppx_bin_prot/ppx_bin_prot.v0.15.0";
+        hash = "sha256:1z2ymwrjl6xc0hh47rcbs6lp1xwl05m3wswy11szr2f8ss6ihmzq";
+      };
+    };
     ppx_cold = 
     {
       pname = "ppx_cold";
@@ -461,6 +1632,25 @@ in
         hash = "sha256:02y9vlqqqxq44lfwxq6as2wqqzilwqzky4dqykafbmn603mnv5y6";
       };
     };
+    ppx_custom_printf = 
+    {
+      pname = "ppx_custom_printf";
+      version = "v0.15.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://ocaml.janestreet.com/ocaml-core/v0.15/files/ppx_custom_printf-v0.15.0.tar.gz";
+        sha256 = "1056lgr0hfx0wry9q8c8v79llrf47yakqdchmk5giayv7ivsf35f";
+      };
+      opamInputs = 
+      {
+        inherit (selection) ppxlib ppx_sexp_conv ocaml dune base;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/ppx_custom_printf/ppx_custom_printf.v0.15.0";
+        hash = "sha256:15h1ir1f7nqanblp9kplblprp3wzlmsiinxma45w7v3nl3icji1v";
+      };
+    };
     ppx_derivers = 
     {
       pname = "ppx_derivers";
@@ -477,6 +1667,45 @@ in
       {
         package = "packages/ppx_derivers/ppx_derivers.1.2.1";
         hash = "sha256:1hj1ina0n7pgz16mrvijczapw75pd0hif0i18dpw7d1fyg2qr8py";
+      };
+    };
+    ppx_deriving = 
+    {
+      pname = "ppx_deriving";
+      version = "5.2.1";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/ocaml-ppx/ppx_deriving/releases/download/v5.2.1/ppx_deriving-v5.2.1.tbz";
+        sha256 = "11h75dsbv3rs03pl67hdd3lbim7wjzh257ij9c75fcknbfr5ysz9";
+      };
+      opamInputs = 
+      {
+        inherit (selection) result ppxlib ppx_derivers ocamlfind ocaml dune
+        cppo;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/ppx_deriving/ppx_deriving.5.2.1";
+        hash = "sha256:0n4j9a5qh5fzxc68shhkhwqfajz49rjb8ryp9lx8ykl1zxddf89k";
+      };
+    };
+    ppx_disable_unused_warnings = 
+    {
+      pname = "ppx_disable_unused_warnings";
+      version = "v0.15.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://ocaml.janestreet.com/ocaml-core/v0.15/files/ppx_disable_unused_warnings-v0.15.0.tar.gz";
+        sha256 = "1gpfyr3a6zcifwcmpv83j371w5lxzy9889jhv8i9n7slny633axf";
+      };
+      opamInputs = 
+      {
+        inherit (selection) ppxlib ocaml dune base;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/ppx_disable_unused_warnings/ppx_disable_unused_warnings.v0.15.0";
+        hash = "sha256:05d5g6jjxin38l1qk6jxrzx1wxlgv9j00bylpqzn1s8hi9ygqymz";
       };
     };
     ppx_enumerate = 
@@ -496,6 +1725,64 @@ in
       {
         package = "packages/ppx_enumerate/ppx_enumerate.v0.15.0";
         hash = "sha256:1yp6h8n9177zp1gxai5s8rpqv9affjafp98svgawhnw66g96653j";
+      };
+    };
+    ppx_expect = 
+    {
+      pname = "ppx_expect";
+      version = "v0.15.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://ocaml.janestreet.com/ocaml-core/v0.15/files/ppx_expect-v0.15.0.tar.gz";
+        sha256 = "0yyaz4r0l63y6p7dvhz8xa5ikdbp04y1ijwvf6b2z9rxni2mlc86";
+      };
+      opamInputs = 
+      {
+        inherit (selection) stdio re ppxlib ppx_inline_test ppx_here ocaml
+        dune base;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/ppx_expect/ppx_expect.v0.15.0";
+        hash = "sha256:1rn44yj1rqmknpggwa86svs90ydmwwh2m1md5lci6v8fwiw44rqd";
+      };
+    };
+    ppx_fields_conv = 
+    {
+      pname = "ppx_fields_conv";
+      version = "v0.15.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://ocaml.janestreet.com/ocaml-core/v0.15/files/ppx_fields_conv-v0.15.0.tar.gz";
+        sha256 = "0q9fnv8jnwzgba90y8y0mx35nqnsj9yjm7xzw9ksyfq47fvb6anj";
+      };
+      opamInputs = 
+      {
+        inherit (selection) ppxlib ocaml fieldslib dune base;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/ppx_fields_conv/ppx_fields_conv.v0.15.0";
+        hash = "sha256:0c1zdm18md8cdblvhfwi901z9csj3cbw9065wh119z4z5z4vsw45";
+      };
+    };
+    ppx_fixed_literal = 
+    {
+      pname = "ppx_fixed_literal";
+      version = "v0.15.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://ocaml.janestreet.com/ocaml-core/v0.15/files/ppx_fixed_literal-v0.15.0.tar.gz";
+        sha256 = "1z59hpljqsy8qbjkj05fly3b1p5lf7rifamrmn6c16gr6g73chgh";
+      };
+      opamInputs = 
+      {
+        inherit (selection) ppxlib ocaml dune base;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/ppx_fixed_literal/ppx_fixed_literal.v0.15.0";
+        hash = "sha256:1hff8whad70y6qks1g416z23hajhcw6mbgh4w3sd3awcd6brxq0x";
       };
     };
     ppx_hash = 
@@ -536,6 +1823,25 @@ in
         hash = "sha256:12wgavjp9q0sbkymzzih9p4j80952dbh9djr0hpmx0by20dsr2in";
       };
     };
+    ppx_ignore_instrumentation = 
+    {
+      pname = "ppx_ignore_instrumentation";
+      version = "v0.15.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://ocaml.janestreet.com/ocaml-core/v0.15/files/ppx_ignore_instrumentation-v0.15.0.tar.gz";
+        sha256 = "00lzm0agvh4vn5rwxb2byzixgmxjziimik99ncng6drrw0disi12";
+      };
+      opamInputs = 
+      {
+        inherit (selection) ppxlib ocaml dune;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/ppx_ignore_instrumentation/ppx_ignore_instrumentation.v0.15.0";
+        hash = "sha256:0jrh2xddyky6657ipn61bf3vm63j7cii0q5srjyg4h9ab64q8g0g";
+      };
+    };
     ppx_inline_test = 
     {
       pname = "ppx_inline_test";
@@ -553,6 +1859,108 @@ in
       {
         package = "packages/ppx_inline_test/ppx_inline_test.v0.15.0";
         hash = "sha256:15vx091zg41k0himh9s5n6bh13l23sm4zrbpmp6j50ra5gd16bks";
+      };
+    };
+    ppx_jane = 
+    {
+      pname = "ppx_jane";
+      version = "v0.15.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://ocaml.janestreet.com/ocaml-core/v0.15/files/ppx_jane-v0.15.0.tar.gz";
+        sha256 = "0il1is2q2h91fqwga2w16z3wr7xym79adry74d1d5pws4z949ynh";
+      };
+      opamInputs = 
+      {
+        inherit (selection) ppxlib ppx_variants_conv ppx_typerep_conv
+        ppx_string ppx_stable ppx_sexp_value ppx_sexp_message ppx_pipebang
+        ppx_optional ppx_optcomp ppx_module_timer ppx_log ppx_let
+        ppx_inline_test ppx_ignore_instrumentation ppx_here ppx_fixed_literal
+        ppx_fields_conv ppx_expect ppx_disable_unused_warnings
+        ppx_custom_printf ppx_bin_prot ppx_bench ppx_base ppx_assert ocaml
+        dune base_quickcheck;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/ppx_jane/ppx_jane.v0.15.0";
+        hash = "sha256:15fn6wz40njslshdsgi932h777szwsva5gvknxmn0djfazgzgdvi";
+      };
+    };
+    ppx_js_style = 
+    {
+      pname = "ppx_js_style";
+      version = "v0.15.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://ocaml.janestreet.com/ocaml-core/v0.15/files/ppx_js_style-v0.15.0.tar.gz";
+        sha256 = "1szbizivg20qsvg9xclvccw3g1vpvjfgjfssx5312dgrggwy61cx";
+      };
+      opamInputs = 
+      {
+        inherit (selection) ppxlib octavius ocaml dune base;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/ppx_js_style/ppx_js_style.v0.15.0";
+        hash = "sha256:1rrn3vkmbdxabm5ad2c2ipspf9rz32w0jqw2vkw59hs9yjlzw6if";
+      };
+    };
+    ppx_let = 
+    {
+      pname = "ppx_let";
+      version = "v0.15.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://ocaml.janestreet.com/ocaml-core/v0.15/files/ppx_let-v0.15.0.tar.gz";
+        sha256 = "0m9niyiiv3qzv5x8hw0ifxjjzshnmx40dchka9d93mmnx88jqx34";
+      };
+      opamInputs = 
+      {
+        inherit (selection) ppxlib ppx_here ocaml dune base;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/ppx_let/ppx_let.v0.15.0";
+        hash = "sha256:0zph3hbadx24yh6arg31pjmn98a0583qhqh451g06ilclfqz5n03";
+      };
+    };
+    ppx_log = 
+    {
+      pname = "ppx_log";
+      version = "v0.15.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://ocaml.janestreet.com/ocaml-core/v0.15/files/ppx_log-v0.15.0.tar.gz";
+        sha256 = "0gknk2b4yss9r7rir4snqkmawby98v0q3salj77cg9fwqk4a6yh3";
+      };
+      opamInputs = 
+      {
+        inherit (selection) sexplib ppxlib ppx_sexp_message ppx_sexp_conv
+        ppx_here ocaml dune base;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/ppx_log/ppx_log.v0.15.0";
+        hash = "sha256:1qz3fqggg9mxw3pi622h7v5g4kq1wq5ij1jxglqz2v0js6n5pfzn";
+      };
+    };
+    ppx_module_timer = 
+    {
+      pname = "ppx_module_timer";
+      version = "v0.15.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://ocaml.janestreet.com/ocaml-core/v0.15/files/ppx_module_timer-v0.15.0.tar.gz";
+        sha256 = "0qkwjq5m017g10zkf50gsaphvfcs0l7jbzqnld4s7ixhghsd1a12";
+      };
+      opamInputs = 
+      {
+        inherit (selection) time_now stdio ppxlib ppx_base ocaml dune base;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/ppx_module_timer/ppx_module_timer.v0.15.0";
+        hash = "sha256:02k47gyxn3ak25nmn99zx0bdpbq10v3zdrmq2ixz641a7v50rllz";
       };
     };
     ppx_optcomp = 
@@ -574,6 +1982,44 @@ in
         hash = "sha256:062wk4jw134j10nkmch4r5j18zizc4r2f0x1vdsbi9jzr9vzzl3n";
       };
     };
+    ppx_optional = 
+    {
+      pname = "ppx_optional";
+      version = "v0.15.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://ocaml.janestreet.com/ocaml-core/v0.15/files/ppx_optional-v0.15.0.tar.gz";
+        sha256 = "0af7ayhfc1jc01mxs4k253gq49yss2ymkmjsy6fpcz39zhci7fvj";
+      };
+      opamInputs = 
+      {
+        inherit (selection) ppxlib ocaml dune base;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/ppx_optional/ppx_optional.v0.15.0";
+        hash = "sha256:0gwcrjc5yhmkyi0qnqfyiw358d340p0ipliai6mi3adjys5y3mhn";
+      };
+    };
+    ppx_pipebang = 
+    {
+      pname = "ppx_pipebang";
+      version = "v0.15.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://ocaml.janestreet.com/ocaml-core/v0.15/files/ppx_pipebang-v0.15.0.tar.gz";
+        sha256 = "1a10aqrwcbc3ykz0zsc4fpfhq4dhv812p4ncj8286qdbhr6mamhy";
+      };
+      opamInputs = 
+      {
+        inherit (selection) ppxlib ocaml dune;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/ppx_pipebang/ppx_pipebang.v0.15.0";
+        hash = "sha256:15jpwi4z99159gbdhba13iqs0r62rrl8apfdp7scc2lqrlc875m9";
+      };
+    };
     ppx_sexp_conv = 
     {
       pname = "ppx_sexp_conv";
@@ -591,6 +2037,159 @@ in
       {
         package = "packages/ppx_sexp_conv/ppx_sexp_conv.v0.15.1";
         hash = "sha256:17303ra9w8cngiaz0s9q6d8617vyfx2nlz1kb813bs0g4vnj27mf";
+      };
+    };
+    ppx_sexp_message = 
+    {
+      pname = "ppx_sexp_message";
+      version = "v0.15.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://ocaml.janestreet.com/ocaml-core/v0.15/files/ppx_sexp_message-v0.15.0.tar.gz";
+        sha256 = "1fnszzzvigf1z0y3hp758rmbm7lhl1ibfd1fkqk9fnz4h1gpi50d";
+      };
+      opamInputs = 
+      {
+        inherit (selection) ppxlib ppx_sexp_conv ppx_here ocaml dune base;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/ppx_sexp_message/ppx_sexp_message.v0.15.0";
+        hash = "sha256:1vyx5krym61z5sqi8zbm1d5ra6xxfm7dnyl66r8i0f0x3radb08v";
+      };
+    };
+    ppx_sexp_value = 
+    {
+      pname = "ppx_sexp_value";
+      version = "v0.15.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://ocaml.janestreet.com/ocaml-core/v0.15/files/ppx_sexp_value-v0.15.0.tar.gz";
+        sha256 = "13ambcwm8qd4nfl752rvr7ksqm9jxjns4h9s1hnv561gzgfd6vip";
+      };
+      opamInputs = 
+      {
+        inherit (selection) ppxlib ppx_sexp_conv ppx_here ocaml dune base;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/ppx_sexp_value/ppx_sexp_value.v0.15.0";
+        hash = "sha256:0zjvyh1mz33nrq9sb9w166g3xm2l7m3p748n713nwdndm8dxiy6l";
+      };
+    };
+    ppx_stable = 
+    {
+      pname = "ppx_stable";
+      version = "v0.15.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://ocaml.janestreet.com/ocaml-core/v0.15/files/ppx_stable-v0.15.0.tar.gz";
+        sha256 = "1crb0464fd10h4r690pf4ljx6hv59bmql51bvcw5js8cb5xfid4h";
+      };
+      opamInputs = 
+      {
+        inherit (selection) ppxlib ocaml dune base;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/ppx_stable/ppx_stable.v0.15.0";
+        hash = "sha256:1mrgqjgyk3prd4gxyz183lp753c88qqkbaaivc4p1h945g1pcxzz";
+      };
+    };
+    ppx_string = 
+    {
+      pname = "ppx_string";
+      version = "v0.15.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://ocaml.janestreet.com/ocaml-core/v0.15/files/ppx_string-v0.15.0.tar.gz";
+        sha256 = "14qkny138jfbh3gifyrd803alxxzzill5vwf7z325l1gg5b4jggk";
+      };
+      opamInputs = 
+      {
+        inherit (selection) ppxlib ppx_base ocaml dune base;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/ppx_string/ppx_string.v0.15.0";
+        hash = "sha256:1vxrkcvc3bh4a4d6ackd2c0v7c0jl3wxr38hfdq8a0hqv9jiwgy5";
+      };
+    };
+    ppx_typerep_conv = 
+    {
+      pname = "ppx_typerep_conv";
+      version = "v0.15.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://ocaml.janestreet.com/ocaml-core/v0.15/files/ppx_typerep_conv-v0.15.0.tar.gz";
+        sha256 = "17sy7fpn3v82aj1ga3q9yc8bbs37y45k8mhhaj7zvjm32gnjj5z7";
+      };
+      opamInputs = 
+      {
+        inherit (selection) typerep ppxlib ocaml dune base;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/ppx_typerep_conv/ppx_typerep_conv.v0.15.0";
+        hash = "sha256:1qkjpivg49x4vsh5mxwk6bjfrw57ad15gpxp26sbfxl61wiblnca";
+      };
+    };
+    ppx_variants_conv = 
+    {
+      pname = "ppx_variants_conv";
+      version = "v0.15.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://ocaml.janestreet.com/ocaml-core/v0.15/files/ppx_variants_conv-v0.15.0.tar.gz";
+        sha256 = "175cvwwz624x81yhzd4547vk8hjplhkbbll5ds8zmhmnwzv9cw3f";
+      };
+      opamInputs = 
+      {
+        inherit (selection) variantslib ppxlib ocaml dune base;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/ppx_variants_conv/ppx_variants_conv.v0.15.0";
+        hash = "sha256:1drj2gavn3ax0hm1pq9mk78ycizd3i2vj7wb4yycr814mlyj6dhg";
+      };
+    };
+    ppx_yojson_conv = 
+    {
+      pname = "ppx_yojson_conv";
+      version = "v0.15.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://ocaml.janestreet.com/ocaml-core/v0.15/files/ppx_yojson_conv-v0.15.0.tar.gz";
+        sha256 = "03xlz70dda015q5lyn8ifqidaijyc76nr7fsi9hkpr1847ba1yqy";
+      };
+      opamInputs = 
+      {
+        inherit (selection) ppxlib ppx_yojson_conv_lib ppx_js_style ocaml
+        dune base;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/ppx_yojson_conv/ppx_yojson_conv.v0.15.0";
+        hash = "sha256:0lk13fvpgx33408sjkmgad1bjjd0qq1svrr1d4xp6j0a6kx2kk1h";
+      };
+    };
+    ppx_yojson_conv_lib = 
+    {
+      pname = "ppx_yojson_conv_lib";
+      version = "v0.15.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://ocaml.janestreet.com/ocaml-core/v0.15/files/ppx_yojson_conv_lib-v0.15.0.tar.gz";
+        sha256 = "115nlv3apiwsbay6188916zddpf84bnqdcbrygqw2vjnykpwblpr";
+      };
+      opamInputs = 
+      {
+        inherit (selection) yojson ocaml dune;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/ppx_yojson_conv_lib/ppx_yojson_conv_lib.v0.15.0";
+        hash = "sha256:07pckbhr0nbswij1z61mw2qkanz1swp5rns7m04487rkphw2lwa2";
       };
     };
     ppxlib = 
@@ -611,6 +2210,61 @@ in
       {
         package = "packages/ppxlib/ppxlib.0.26.0";
         hash = "sha256:1b94sf1xwgvi3mb2k4i8h3rx1qwvkqcg1nk3iwb5qmp2flbpzk6k";
+      };
+    };
+    psq = 
+    {
+      pname = "psq";
+      version = "0.2.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/pqwy/psq/releases/download/v0.2.0/psq-v0.2.0.tbz";
+        sha256 = "1j4lqkq17rskhgcrpgr4n1m1a2b1x35mlxj6f9g05rhpmgvgvknk";
+      };
+      opamInputs = {
+                     inherit (selection) seq ocaml dune;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/psq/psq.0.2.0";
+        hash = "sha256:0bbyscl3az6vi6rncif7f8da7br78870qql5vlmg56w7ka3sgj9s";
+      };
+    };
+    re = 
+    {
+      pname = "re";
+      version = "1.10.4";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/ocaml/ocaml-re/releases/download/1.10.4/re-1.10.4.tbz";
+        sha256 = "0z3lracww84cswj0a4s28x987sk28c7h2j87hb3iv6xa011kxsw3";
+      };
+      opamInputs = {
+                     inherit (selection) seq ocaml dune;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/re/re.1.10.4";
+        hash = "sha256:00918wlxkkbj8dwpiwpyyvc8falk4ddrf0pxn5v2kahc2jl251vg";
+      };
+    };
+    react = 
+    {
+      pname = "react";
+      version = "1.2.2";
+      src = pkgs.fetchurl 
+      {
+        url = "https://erratique.ch/software/react/releases/react-1.2.2.tbz";
+        sha256 = "16cg4byj8lfbbw96dhh8sks5y9n1c3fshz7f2p8m7wgisqax7bf4";
+      };
+      opamInputs = 
+      {
+        inherit (selection) topkg ocamlfind ocamlbuild ocaml;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/react/react.1.2.2";
+        hash = "sha256:1airidp9cw8sk92jc3bvarph3pc43qaf3hcywi0anmpznsygcm0z";
       };
     };
     result = 
@@ -645,6 +2299,44 @@ in
         hash = "sha256:1vm8mk6zm2q3fwnkprl6jib048zr4ysldw0bl74x6wwbxj0vx6k9";
       };
     };
+    sexp_pretty = 
+    {
+      pname = "sexp_pretty";
+      version = "v0.15.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://ocaml.janestreet.com/ocaml-core/v0.15/files/sexp_pretty-v0.15.0.tar.gz";
+        sha256 = "1wax07zgvjcmrdnc2g89h6sbp5cirk65l5ibf00h57dzq8xn9s4r";
+      };
+      opamInputs = 
+      {
+        inherit (selection) sexplib re ppx_base ocaml dune base;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/sexp_pretty/sexp_pretty.v0.15.0";
+        hash = "sha256:193i7rpjy0rz7fd8wm0w3kldhh2kidx4klrml1smcicl46vv97ga";
+      };
+    };
+    sexplib = 
+    {
+      pname = "sexplib";
+      version = "v0.15.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://ocaml.janestreet.com/ocaml-core/v0.15/files/sexplib-v0.15.0.tar.gz";
+        sha256 = "1xs55f11yhscnfrzpvy1vn05j6xi9kxy097465624l615j7k8qm5";
+      };
+      opamInputs = 
+      {
+        inherit (selection) sexplib0 parsexp ocaml num dune;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/sexplib/sexplib.v0.15.0";
+        hash = "sha256:1g731ans2ivmzs0ajy1vl31hhp64p60i4lda91asgcya2dbg6lg3";
+      };
+    };
     sexplib0 = 
     {
       pname = "sexplib0";
@@ -661,6 +2353,64 @@ in
       {
         package = "packages/sexplib0/sexplib0.v0.15.0";
         hash = "sha256:1msz0hdj2gnk7makmqdp46v6995vv3y859vzd3qabdafm5rq4d82";
+      };
+    };
+    spawn = 
+    {
+      pname = "spawn";
+      version = "v0.15.1";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/janestreet/spawn/archive/v0.15.1.tar.gz";
+        sha256 = "0l4xq43dxsvxli9kkpnywrw81dyn11bfpdlsd36kyv5b9wqyxzcs";
+      };
+      opamInputs = {
+                     inherit (selection) ocaml dune;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/spawn/spawn.v0.15.1";
+        hash = "sha256:18cl7lgcf5gl3r5ffdqiza5hydjgn8hwk4lsb6gsibv8jd7jx8bq";
+      };
+    };
+    splittable_random = 
+    {
+      pname = "splittable_random";
+      version = "v0.15.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://ocaml.janestreet.com/ocaml-core/v0.15/files/splittable_random-v0.15.0.tar.gz";
+        sha256 = "006vxsmjlayqm39r343mishikx63ifd4kkwbr92rzhxmbz4fdy4z";
+      };
+      opamInputs = 
+      {
+        inherit (selection) ppx_sexp_message ppx_inline_test ppx_bench
+        ppx_assert ocaml dune base;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/splittable_random/splittable_random.v0.15.0";
+        hash = "sha256:02qr51n5sq4hc131grw37p92j30pflia89qgsvg0yw4czc5lvlqc";
+      };
+    };
+    ssl = 
+    {
+      pname = "ssl";
+      version = "0.5.10";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/savonet/ocaml-ssl/archive/v0.5.10.tar.gz";
+        sha256 = "0vcc8p6i8lhs59y3ycikllc6j1adh9syh63g5ibnrp3yz3lk2cwl";
+      };
+      opamInputs = 
+      {
+        inherit (selection) ocaml dune-configurator dune conf-libssl
+        base-unix;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/ssl/ssl.0.5.10";
+        hash = "sha256:01dz4wn8s75bxd5mc1jqi1cabvw3ic9jkrwbz9swjlwf9rxfwdvj";
       };
     };
     stdio = 
@@ -699,6 +2449,44 @@ in
         hash = "sha256:1hwyzzcx7clz4p58fj3n6frq2srbxdmhmxxd6n6mpw9gj2vs6yiw";
       };
     };
+    stdune = 
+    {
+      pname = "stdune";
+      version = "3.2.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/ocaml/dune/releases/download/3.2.0/chrome-trace-3.2.0.tbz";
+        sha256 = "1g6m3a5b1nhvrxw5agzmng7ayy1rwbib56x8dyr1xvbrmvkbq7xx";
+      };
+      opamInputs = 
+      {
+        inherit (selection) pp ordering ocaml dyn dune csexp;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/stdune/stdune.3.2.0";
+        hash = "sha256:19yji4c393xijl59ky6h6ahi63cylwymavbkj33z10kp9hhdx0fa";
+      };
+    };
+    stringext = 
+    {
+      pname = "stringext";
+      version = "1.6.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/rgrinberg/stringext/releases/download/1.6.0/stringext-1.6.0.tbz";
+        sha256 = "1sh6nafi3i9773j5mlwwz3kxfzdjzsfqj2qibxhigawy5vazahfv";
+      };
+      opamInputs = 
+      {
+        inherit (selection) ocaml dune base-bytes;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/stringext/stringext.1.6.0";
+        hash = "sha256:1yjysjb40yjhqmcx3z12y2nmr2qy215qdnvdns1hxip0fjcd4zkz";
+      };
+    };
     time_now = 
     {
       pname = "time_now";
@@ -717,6 +2505,215 @@ in
       {
         package = "packages/time_now/time_now.v0.15.0";
         hash = "sha256:1l6ffa9f0i1kpm2fgmhl2f63bbswd8sgzjbfgpcxkgxsivjgp6qf";
+      };
+    };
+    timezone = 
+    {
+      pname = "timezone";
+      version = "v0.15.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://ocaml.janestreet.com/ocaml-core/v0.15/files/timezone-v0.15.0.tar.gz";
+        sha256 = "03a1f492qx8qpxcnr3vylm4r04f7pyhy445rq2kafyf70vfwxzm5";
+      };
+      opamInputs = 
+      {
+        inherit (selection) ppx_jane ocaml dune core;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/timezone/timezone.v0.15.0";
+        hash = "sha256:1r2pk2zlxlmznr7qi0sip0nvhfm0i619jcqdjl41dfvh7jbagjnx";
+      };
+    };
+    topkg = 
+    {
+      pname = "topkg";
+      version = "1.0.5";
+      src = pkgs.fetchurl 
+      {
+        url = "https://erratique.ch/software/topkg/releases/topkg-1.0.5.tbz";
+        sha256 = "1iyinmcfqpprk7k4cc51nqgypayprbj4larwcfqw86k5dri84825";
+      };
+      opamInputs = 
+      {
+        inherit (selection) ocamlfind ocamlbuild ocaml;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/topkg/topkg.1.0.5";
+        hash = "sha256:04vg4zic7f6zk44vkvqw2fcr562hl7d0gklv3vgphk4n3bnqbcyy";
+      };
+    };
+    trie = 
+    {
+      pname = "trie";
+      version = "1.0.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/kandu/trie/archive/1.0.0.tar.gz";
+        sha256 = "1slq4kiwnc723dsaw15ms7xxpqz061v8zck1m6iyc5j2li70by62";
+      };
+      opamInputs = {
+                     inherit (selection) ocaml dune;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/trie/trie.1.0.0";
+        hash = "sha256:1ds07ikjjymacnlxfx1widfi7qz0js61lsqqq0xa90501p17nq10";
+      };
+    };
+    typerep = 
+    {
+      pname = "typerep";
+      version = "v0.15.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://ocaml.janestreet.com/ocaml-core/v0.15/files/typerep-v0.15.0.tar.gz";
+        sha256 = "0ghqlfkpb20l3wp7dgb27viz5zdsmsd3ijrzb4bs8h0lniyx7j16";
+      };
+      opamInputs = {
+                     inherit (selection) ocaml dune base;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/typerep/typerep.v0.15.0";
+        hash = "sha256:0awhhkrrkzkgvc04k1ymrna2wcw72wgv2qlkcibrymgq1kvzrkyr";
+      };
+    };
+    uri = 
+    {
+      pname = "uri";
+      version = "4.2.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/mirage/ocaml-uri/releases/download/v4.2.0/uri-v4.2.0.tbz";
+        sha256 = "0szifda6yism5vn5jdizkha3ad0xk6zw4xgfl8g77dnv83ci7h65";
+      };
+      opamInputs = 
+      {
+        inherit (selection) stringext ocaml dune angstrom;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/uri/uri.4.2.0";
+        hash = "sha256:1s0rbjixhl1ypxv9xxmldlmxm6gj9rrzmcgydp8dna4n0wza4hbf";
+      };
+    };
+    utop = 
+    {
+      pname = "utop";
+      version = "2.9.1";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/ocaml-community/utop/releases/download/2.9.1/utop-2.9.1.tbz";
+        sha256 = "19n1h6bsb45dyb0pq8c9dhsr583mgsxfm2lv0p039akzhcnk2d79";
+      };
+      opamInputs = 
+      {
+        inherit (selection) react ocamlfind ocaml lwt_react lwt lambda-term
+        dune cppo camomile base-unix base-threads;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/utop/utop.2.9.1";
+        hash = "sha256:0jdfpmh0i8nlhvzbr576a39q9d5zxsfyh2bmfpxx38arv601655w";
+      };
+    };
+    uutf = 
+    {
+      pname = "uutf";
+      version = "1.0.3";
+      src = pkgs.fetchurl 
+      {
+        url = "https://erratique.ch/software/uutf/releases/uutf-1.0.3.tbz";
+        sha256 = "0s05r8ggp1g97zq4rnvbxzj22pv8ld0k5wsdw662jw0y7mhsawl7";
+      };
+      opamInputs = 
+      {
+        inherit (selection) topkg ocamlfind ocamlbuild
+        ocaml;
+        cmdliner = selection.cmdliner or null;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/uutf/uutf.1.0.3";
+        hash = "sha256:1x57h3bc68rsm2kd18wjbkfjk67shak6jgplp7paw97faqgmgx3x";
+      };
+    };
+    variantslib = 
+    {
+      pname = "variantslib";
+      version = "v0.15.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://ocaml.janestreet.com/ocaml-core/v0.15/files/variantslib-v0.15.0.tar.gz";
+        sha256 = "12dssx4by6rgjzfrvksz83hkcpmsq0brn87dh22pv1rrwhw79n75";
+      };
+      opamInputs = {
+                     inherit (selection) ocaml dune base;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/variantslib/variantslib.v0.15.0";
+        hash = "sha256:1x4qsay1hpsrh147rmqbhzmg0lv3inci31mjsa5k28hhb4mk3sfh";
+      };
+    };
+    xdg = 
+    {
+      pname = "xdg";
+      version = "3.2.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/ocaml/dune/releases/download/3.2.0/chrome-trace-3.2.0.tbz";
+        sha256 = "1g6m3a5b1nhvrxw5agzmng7ayy1rwbib56x8dyr1xvbrmvkbq7xx";
+      };
+      opamInputs = {
+                     inherit (selection) ocaml dune;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/xdg/xdg.3.2.0";
+        hash = "sha256:198zx7qyg0lj6b1cxspwpsdcg80m9zmmyfcq21qcizz8rdlc4v47";
+      };
+    };
+    yojson = 
+    {
+      pname = "yojson";
+      version = "1.7.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/ocaml-community/yojson/releases/download/1.7.0/yojson-1.7.0.tbz";
+        sha256 = "1iich6323npvvs8r50lkr4pxxqm9mf6w67cnid7jg1j1g5gwcvv5";
+      };
+      opamInputs = 
+      {
+        inherit (selection) ocaml easy-format dune cppo biniou;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/yojson/yojson.1.7.0";
+        hash = "sha256:1n8iih0jmaf9b0hsv6ph729jajws9w43kgm24324p4wlj45rjs2q";
+      };
+    };
+    zed = 
+    {
+      pname = "zed";
+      version = "3.1.0";
+      src = pkgs.fetchurl 
+      {
+        url = "https://github.com/ocaml-community/zed/archive/3.1.0.tar.gz";
+        sha256 = "1z95fs49hi00xy078a83m0vfdqwjb5953rwr15lfpirldi4v11y3";
+      };
+      opamInputs = 
+      {
+        inherit (selection) react ocaml dune charInfo_width camomile
+        base-bytes;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/zed/zed.3.1.0";
+        hash = "sha256:1k1yd4dwg6x5rija3lan3q57nr6f1xa45248613rr7k2x5zdp2nx";
       };
     };
   };

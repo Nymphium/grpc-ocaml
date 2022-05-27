@@ -1,0 +1,11 @@
+(test
+ (name test)
+ (libraries grpc.server grpc.client))
+
+(rule
+ (alias runtest)
+ (target proto.ml)
+ (deps
+  (:proto proto.proto))
+ (action
+  (bash "protoc --ocaml_out=. -I . %{proto}")))

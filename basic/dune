@@ -1,0 +1,8 @@
+(library
+ (name Grpc_basic)
+ (public_name grpc.basic)
+ (libraries core h2 uri logs lwt.unix)
+ (inline_tests
+  (flags -verbose))
+ (preprocess
+  (pps ppx_deriving.std ppx_inline_test ppx_assert)))

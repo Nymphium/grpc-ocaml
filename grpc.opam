@@ -1,0 +1,25 @@
+opam-version: "2.0"
+version: "0.0.0"
+depends: [
+  "dune" {< "3.2"}
+  "ocaml"
+  "core"
+  "core_unix"
+  "lwt"
+  "hmap"
+  "logs"
+  "uri"
+  "h2-lwt-unix"
+  "ocaml-protoc-plugin"
+  "conf-protoc" { with-test }
+  "lwt_ssl"
+  "lwt_ppx"
+  "ppx_deriving"
+  "ppx_yojson_conv"
+  "ppx_let"
+  "ppx_inline_test" { with-test }
+  "alcotest" { with-test }
+]
+
+build: ["dune" "build" "-j" jobs "-p" name]
+

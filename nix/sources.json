@@ -1,26 +1,50 @@
 {
+    "core_unix": {
+        "branch": "remove-shebang",
+        "description": "Unix-specific portions of Core",
+        "homepage": "",
+        "owner": "nymphium",
+        "repo": "core_unix",
+        "rev": "3724c81cb0f1dd4c0f88e30837cbf928b49c7c93",
+        "sha256": "1w8cpf269jjl8m8q6v3wfzxgjpl0z02l0h0abibqyap49f6vyn15",
+        "type": "tarball",
+        "url": "https://github.com/nymphium/core_unix/archive/3724c81cb0f1dd4c0f88e30837cbf928b49c7c93.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
     "niv": {
         "branch": "master",
         "description": "Easy dependency management for Nix projects",
         "homepage": "https://github.com/nmattia/niv",
         "owner": "nmattia",
         "repo": "niv",
-        "rev": "945aa20cd077a8eccb1c42e29f225370b9a8d78b",
-        "sha256": "0qx94wvmaplagiwmrh558iwwr7nhvini40qmlx21myc66z51if32",
+        "rev": "82e5cd1ad3c387863f0545d7591512e76ab0fc41",
+        "sha256": "090l219mzc0gi33i3psgph6s2pwsc8qy4lyrqjdj4qzkvmaj65a7",
         "type": "tarball",
-        "url": "https://github.com/nmattia/niv/archive/945aa20cd077a8eccb1c42e29f225370b9a8d78b.tar.gz",
+        "url": "https://github.com/nmattia/niv/archive/82e5cd1ad3c387863f0545d7591512e76ab0fc41.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "nixpkgs": {
-        "branch": "master",
+        "branch": "bc59ba15b64d0a0ee1d1764f18b4f3480d2c3e5a",
         "description": "Nix Packages collection",
         "homepage": "",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "bb074513be0ca2abfd48481af855d10311db370d",
-        "sha256": "02z10c1y6885pscpmp96f7vvk6bxrxzjs21rk5lfsrf58pw9f6gs",
+        "rev": "bc59ba15b64d0a0ee1d1764f18b4f3480d2c3e5a",
+        "sha256": "1xc8qw9q35zz0x4f4m27qfp86ffp2r2b2s0i45828h258rk634gz",
         "type": "tarball",
-        "url": "https://github.com/nixos/nixpkgs/archive/bb074513be0ca2abfd48481af855d10311db370d.tar.gz",
+        "url": "https://github.com/nixos/nixpkgs/archive/bc59ba15b64d0a0ee1d1764f18b4f3480d2c3e5a.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
+    "ocaml-protoc-plugin": {
+        "branch": "create-rpc-path",
+        "description": "ocaml-protoc-plugin",
+        "homepage": "https://issuu.github.io/ocaml-protoc-plugin/",
+        "owner": "nymphium",
+        "repo": "ocaml-protoc-plugin",
+        "rev": "7b0e28980f3938e23590fe90f619d17788ee3ca3",
+        "sha256": "01jqrj01xpacvm093yrm33bf1gfv54li0hn0wnl5642yxphk1c2h",
+        "type": "tarball",
+        "url": "https://github.com/nymphium/ocaml-protoc-plugin/archive/7b0e28980f3938e23590fe90f619d17788ee3ca3.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "opam2nix": {
