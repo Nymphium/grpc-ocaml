@@ -26,7 +26,10 @@ jobs:
           dune-cache: ${{ matrix.os != 'macos-latest' }}
 
       - name: Install dependencies
-        run: opam install . --deps-only --with-doc --verbose
+        run: |
+          apt install protobuf grpcurl yarn # I don't know ubuntu has these pkgs or its correct name
+          opam pin add ocaml-protoc-plugin https://github.com/Nymphium/ocaml-protoc-plugin#create-rpc-path
+          opam install . --deps-only --with-doc --verbose
 
       - name: Build
         run: opam exec -- dune build
