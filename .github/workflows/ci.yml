@@ -27,7 +27,12 @@ jobs:
 
       - name: Install dependencies
         run: |
-          apt install protobuf grpcurl yarn # I don't know ubuntu has these pkgs or its correct name
+          if [ "${{ matrix.os }}" = "ubuntu-latest" ] ; then
+            sudo apt-get install -y protobuf grpcurl yarn
+          else
+            brew install protobuf grpcurl yarn
+          fi
+          
           opam pin add ocaml-protoc-plugin https://github.com/Nymphium/ocaml-protoc-plugin#create-rpc-path
           opam install . --deps-only --with-doc --verbose
 
