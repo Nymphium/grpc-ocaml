@@ -2,7 +2,7 @@ include Grpc_basic.Log
 
 let default = Logs.Src.create "grpc.server"
 let src = default
-let header = "grpc.client"
+let header = "grpc.server"
 
 module Tag = struct
   include Tag
