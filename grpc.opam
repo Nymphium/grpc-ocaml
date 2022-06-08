@@ -17,7 +17,7 @@ depends: [
   "ppx_deriving"
   "ppx_yojson_conv"
   "ppx_let"
-  "fmt" { with-test }
+  "fmt"
   "ppx_inline_test" { with-test }
   "alcotest" { with-test }
 ]
