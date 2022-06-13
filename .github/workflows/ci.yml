@@ -42,8 +42,5 @@ jobs:
           opam pin add ocaml-protoc-plugin https://github.com/Nymphium/ocaml-protoc-plugin.git#create-rpc-path
           opam install . --deps-only --with-doc --verbose
 
-      - name: Build
-        run: opam exec -- dune build
-
       - name: Run tests
         run: opam exec -- dune runtest
