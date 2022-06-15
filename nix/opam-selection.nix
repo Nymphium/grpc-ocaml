@@ -24,7 +24,7 @@ in
 {
   format-version = 4;
   inherit repos;
-  ocaml-version = "4.13.1";
+  ocaml-version = "4.14.0";
   selection = 
   {
     alcotest = 
@@ -1211,7 +1211,7 @@ in
     ocaml = 
     {
       pname = "ocaml";
-      version = "4.13.1";
+      version = "4.14.0";
       src = null;
       opamInputs = 
       {
@@ -1223,25 +1223,25 @@ in
       };
       opamSrc = repoPath (repos.opam-repository.src) 
       {
-        package = "packages/ocaml/ocaml.4.13.1";
-        hash = "sha256:12aajj2hc636jr6wbv4vba8pmjdndbcvnw7q35gj4agxmrjspziw";
+        package = "packages/ocaml/ocaml.4.14.0";
+        hash = "sha256:1p4i6fpw1psp5izwcdswcilkkzicdm33mwzg5hhm2cqn85784hmq";
       };
     };
     ocaml-base-compiler = 
     {
       pname = "ocaml-base-compiler";
-      version = "4.13.1";
+      version = "4.14.0";
       src = pkgs.fetchurl 
       {
-        url = "https://github.com/ocaml/ocaml/archive/4.13.1.tar.gz";
-        sha256 = "1i7ad8lh5l74wb3yzmhlv529wc75a5sjybzkad7wdl8zrj47jk0r";
+        url = "https://github.com/ocaml/ocaml/archive/4.14.0.tar.gz";
+        sha256 = "1s2ml56m8i43jgvr59vx09javdrwfps8p7az9h2x2a1g71h45x1r";
       };
       opamInputs = {
       };
       opamSrc = repoPath (repos.opam-repository.src) 
       {
-        package = "packages/ocaml-base-compiler/ocaml-base-compiler.4.13.1";
-        hash = "sha256:069i5vsndd9lsvdm5wk898nfnc85ww7459nibjg6881ww43w8ck1";
+        package = "packages/ocaml-base-compiler/ocaml-base-compiler.4.14.0";
+        hash = "sha256:1scnnh353kx76icrawbykf537fmfddlgvddwnmi6pnka3hjkzgix";
       };
     };
     ocaml-compiler-libs = 
@@ -1282,11 +1282,11 @@ in
     ocaml-lsp-server = 
     {
       pname = "ocaml-lsp-server";
-      version = "1.10.5";
+      version = "1.11.6";
       src = pkgs.fetchurl 
       {
-        url = "https://github.com/ocaml/ocaml-lsp/releases/download/1.10.5/jsonrpc-1.10.5.tbz";
-        sha256 = "1k0d8cq8pn3jn2lahp3v7plqhia9wzd6m3gm7rb6ifbbvpm55qjd";
+        url = "https://github.com/ocaml/ocaml-lsp/releases/download/1.11.6/jsonrpc-1.11.6.tbz";
+        sha256 = "1fxvk5c4qfmjh262w45ymrhqxjw8g1dvcs6gic1llb1ksp74ddah";
       };
       opamInputs = 
       {
@@ -1296,8 +1296,8 @@ in
       };
       opamSrc = repoPath (repos.opam-repository.src) 
       {
-        package = "packages/ocaml-lsp-server/ocaml-lsp-server.1.10.5";
-        hash = "sha256:159g0f66j1rjmp57cv5rinf7qajnj6kqimhn0q6008nag3l94fq4";
+        package = "packages/ocaml-lsp-server/ocaml-lsp-server.1.11.6";
+        hash = "sha256:1yvn3v3j8phf2p8hbc5axd69w8xhclfwwwj5c82m7gs41rz196yh";
       };
     };
     ocaml-protoc-plugin = 
