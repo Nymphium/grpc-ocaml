@@ -1,7 +1,14 @@
 (library
  (name grpc_client)
  (public_name grpc.client)
- (libraries grpc.basic core uri lwt.unix logs.lwt ocaml-protoc-plugin h2-lwt-unix)
+ (libraries
+  grpc.basic
+  core
+  uri
+  lwt.unix
+  logs.lwt
+  ocaml-protoc-plugin
+  h2-lwt-unix)
  (inline_tests
   (flags -verbose))
  (preprocess

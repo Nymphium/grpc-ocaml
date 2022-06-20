@@ -44,32 +44,41 @@ open struct
     let%lwt addrs =
       Lwt_unix.getaddrinfo host port [ AI_CANONNAME; AI_FAMILY sock_domain ]
     in
-    let%lwt msocket =
-      (* try connecting with addr *)
-      Lwt_list.fold_left_s
-        (fun addr_ok addr_check ->
-          match addr_ok with
-          | None ->
-            let socket =
-              let it = Lwt_unix.socket sock_domain Unix.SOCK_STREAM 0 in
-              let () = Lwt_unix.setsockopt it Unix.SO_KEEPALIVE true in
-              let () = Lwt_unix.setsockopt it Unix.SO_REUSEADDR true in
-              it
-            in
-            (try%lwt
-               let%lwt () = Lwt_unix.connect socket addr_check.Unix.ai_addr in
-               Lwt.return @@ Some socket
-             with
-            | _ ->
-              let%lwt () = Lwt_unix.close socket in
-              Lwt.return @@ None)
-          | addr -> Lwt.return @@ addr)
-        None
-        addrs
-    in
-    match msocket with
-    | Some socket -> Lwt.return socket
-    | None -> Lwt.fail_with @@ Printf.sprintf "failed to connect %s:%s" host port
+    match addrs with
+    | [] -> Lwt.fail_with @@ Printf.sprintf "failed to resolve hostname: %s:%s" host port
+    | _ ->
+      let%lwt msocket =
+        (* try connecting with addr *)
+        Lwt_list.fold_left_s
+          (fun addr_ok addr_check ->
+            match addr_ok with
+            | None ->
+              let socket =
+                let it = Lwt_unix.socket sock_domain Unix.SOCK_STREAM 0 in
+                let () = Lwt_unix.setsockopt it Unix.SO_KEEPALIVE true in
+                let () = Lwt_unix.setsockopt it Unix.SO_REUSEADDR true in
+                it
+              in
+              (try%lwt
+                 let%lwt () = Lwt_unix.connect socket addr_check.Unix.ai_addr in
+                 Lwt.return @@ Some socket
+               with
+              | _ ->
+                let () =
+                  Lwt.async
+                  @@ fun () ->
+                  Logs_lwt.debug ~src:Log.src (fun m ->
+                      m ~header:Log.header "failed to use fd")
+                in
+                let%lwt () = Lwt_unix.close socket in
+                Lwt.return @@ None)
+            | addr -> Lwt.return @@ addr)
+          None
+          addrs
+      in
+      (match msocket with
+      | Some socket -> Lwt.return socket
+      | None -> Lwt.fail_with @@ Printf.sprintf "no available address for %s:%s" host port)
   ;;
 
   let make_connection host port =
