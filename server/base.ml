@@ -31,7 +31,7 @@ let make_response_trailers = function
         |> Trailers.set_grpc_status (Grpc_basic.status_to_int status |> string_of_int)
         |> Trailers.set_grpc_message msg)
     in
-    msg, trailers
+    trim_response_with_frames "", trailers
 ;;
 
 (** @see https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md#requests *)
