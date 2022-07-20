@@ -1,1 +1,11 @@
 (dirs :standard \ result nix .direnv)
+
+(env
+ (dev
+  (flags
+   (:standard -g)))
+ (release
+  (inline_tests ignored)
+  (ocamlopt_flags
+   ((:standard \ -g)
+    -O3))))

@@ -1,0 +1,34 @@
+(library
+ (name grpc_stub)
+ (public_name grpc.stub)
+ (libraries ctypes ctypes.foreign)
+ (preprocess
+  (pps ppx_deriving.std))
+ (modules :standard \ test)
+ (flags
+  (:standard -w -9-27))
+ (ctypes
+  (external_library_name grpc)
+  (headers
+   (include
+    "grpc/grpc.h"
+    "grpc/grpc_security.h"
+    "grpc/slice.h"
+    "grpc/byte_buffer_reader.h"
+    "grpc/support/log.h"
+    "grpc/support/alloc.h"
+    "grpc/support/sync.h"
+    "grpc/impl/codegen/sync_generic.h"))
+  (type_description
+   (instance Type)
+   (functor Type_description))
+  (function_description
+   (instance Functions)
+   (functor Function_description))
+  (generated_types Types_generated)
+  (generated_entry_point C)))
+
+(test
+ (name test)
+ (modules test)
+ (libraries grpc.stub ctypes alcotest))

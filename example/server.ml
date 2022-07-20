@@ -9,12 +9,11 @@ let server host port =
     let open Grpc_server in
     let open Middlewares in
     empty
-    |> add (fun ctx reqd ->
-           let H2.Request.{ headers; _ } = H2.Reqd.request reqd in
+    |> add (fun ctx headers _ ->
            let request_id =
-             Headers.get "request-id" headers
+             List.assoc_opt "request-id" headers
              |> (function
-                  | None -> Headers.get "x-request-id" headers
+                  | None -> List.assoc_opt "x-request-id" headers
                   | Some _ as some -> some)
              |> Option.value
                   ~default:(Random.int 50000 |> Printf.sprintf "request-id-is-%d")
@@ -23,14 +22,13 @@ let server host port =
   in
   let handlers =
     Grpc_server.Handler.(
-      empty
-      |> Unary.add EchoService.greet'
-         @@ fun ctx message ->
-         let request_id = Grpc_server.Context.get Ctx.request_id ctx in
-         Logs.debug (fun m -> m "request-id: %s" request_id);
-         Lwt_result.return message)
+      Unary.add EchoService.greet'
+      @@ fun ctx _ message ->
+      let request_id = Grpc_server.Context.get Ctx.request_id ctx in
+      Logs.debug (fun m -> m "request-id: %s" request_id);
+      ok message)
   in
-  Grpc_server.establish_and_run ~host ~port ~middlewares handlers
+  Grpc_server.establish ~host ~port ~middlewares handlers
 ;;
 
 let () =

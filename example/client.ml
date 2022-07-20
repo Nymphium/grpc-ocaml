@@ -12,12 +12,13 @@ let () =
   Lwt_main.run
   @@
   let open Lwt.Syntax in
+  let* _res = send_greet host port in
   let* res = send_greet host port in
   match res with
   | Ok (msg, _) ->
     Logs.debug (fun m -> m "response: %s" msg);
     Lwt.return_unit
-  | Error (err, msg) ->
+  | Error (err, msg, _) ->
     let msg = Option.value msg ~default:"" in
     Printf.eprintf "%s: %s\n" (Grpc_basic.Error.show err) msg;
     exit 1

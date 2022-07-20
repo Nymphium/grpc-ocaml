@@ -20,8 +20,8 @@ let () =
      | Ok (msg, _) ->
        print_endline msg;
        Lwt.return_unit
-     | Error (err, msg) ->
+     | Error (err, msg, _tr) ->
        let msg = Option.value msg ~default:"" in
-       Printf.eprintf "%s: %s\n" (Grpc_basic.Error.show err) msg;
+       Printf.eprintf "%s: %s\n" (Grpc_core.Status.Code.show_fail_bwd err) msg;
        exit 1
 ;;

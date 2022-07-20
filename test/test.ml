@@ -12,11 +12,11 @@ let server host port =
   end
   in
   let middlewares =
+    let open Grpc_basic in
     let open Grpc_server in
     let open Middlewares in
     empty
-    |> add (fun ctx reqd ->
-           let H2.Request.{ headers; _ } = H2.Reqd.request reqd in
+    |> add (fun ctx headers _ ->
            let request_id =
              Headers.get "request-id" headers
              |> (function
@@ -29,14 +29,13 @@ let server host port =
   in
   let handlers =
     Grpc_server.Handler.(
-      empty
-      |> Unary.add EchoService.greet'
-         @@ fun ctx message ->
-         let request_id = Grpc_server.Context.get Ctx.request_id ctx in
-         print_endline request_id;
-         Lwt_result.return message)
+      Unary.add EchoService.greet'
+      @@ fun ctx _ message ->
+      let request_id = Grpc_server.Context.get Ctx.request_id ctx in
+      print_endline request_id;
+      ok message)
   in
-  Grpc_server.establish_and_run ~host ~port ~middlewares handlers
+  Grpc_server.establish ~host ~port ~middlewares handlers
 ;;
 
 let () =
@@ -60,7 +59,7 @@ let () =
   | Ok (msg, _) ->
     print_endline msg;
     Lwt.return_unit
-  | Error (err, msg) ->
+  | Error (err, msg, _) ->
     let msg = Option.value msg ~default:"" in
     Printf.eprintf "%s: %s\n" (Grpc_basic.Error.show err) msg;
     exit 1

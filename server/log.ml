@@ -10,7 +10,7 @@ module Tag = struct
   let target = Tag.str ~name:"target"
 
   let request =
-    let def = Logs.Tag.def "request" H2.Request.pp_hum in
+    let def = Logs.Tag.def "request" Grpc_basic.Headers.pp in
     Logs.Tag.add def
   ;;
 end

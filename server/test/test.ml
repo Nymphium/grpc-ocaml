@@ -5,24 +5,22 @@ end
 let handler =
   let module EchoService = Proto.Grpc_test.Echo in
   Grpc_server.Handler.(
-    empty
-    |> Unary.add EchoService.greet'
-       @@ fun ctx message ->
-       let request_id = Grpc_server.Context.get Ctx.request_id ctx in
-       print_endline request_id;
-       Lwt_result.return message)
+    Unary.add EchoService.greet'
+    @@ fun ctx _headers message ->
+    let request_id = Grpc_server.Context.get Ctx.request_id ctx in
+    print_endline request_id;
+    ok message)
 ;;
 
 let middlewares =
   let open Grpc_server in
   let open Middlewares in
   empty
-  |> add (fun ctx reqd ->
-         let H2.Request.{ headers; _ } = H2.Reqd.request reqd in
+  |> add (fun ctx headers _data ->
          let request_id =
-           Headers.get "request-id" headers
+           List.assoc_opt "request-id" headers
            |> (function
-                | None -> Headers.get "x-request-id" headers
+                | None -> List.assoc_opt "x-request-id" headers
                 | Some _ as some -> some)
            |> Option.value ~default:(Random.int 50000 |> Printf.sprintf "request-id-is-%d")
          in
@@ -48,7 +46,7 @@ let () =
       async
       @@ fun () ->
       print_endline "establish server...";
-      Grpc_server.establish ~host ~port ~middlewares handler >|= Fun.const ())
+      Grpc_server.establish ~host ~port ~middlewares handler)
   in
   print_endline "send gRPC via grpcurl...";
   let* st = Lwt_process.exec cmd in

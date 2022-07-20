@@ -1,20 +1,7 @@
-(** @see https://github.com/googleapis/googleapis/blob/master/google/rpc/code.proto *)
-type t =
-  [ `CANCELLED [@value 1]
-  | `UNKNOWN [@value 2]
-  | `INVALID_ARGUMENT [@value 3]
-  | `DEADLINE_EXCEEDED [@value 4]
-  | `NOT_FOUND [@value 5]
-  | `ALREADY_EXISTS [@value 6]
-  | `PERMISSION_DENIED [@value 7]
-  | `UNAUTHENTICATED [@value 16]
-  | `RESOURCE_EXHAUSTED [@value 8]
-  | `FAILED_PRECONDITION [@value 9]
-  | `ABORTED [@value 10]
-  | `OUT_OF_RANGE [@value 11]
-  | `UNIMPLEMENTED [@value 12]
-  | `INTERNAL [@value 13]
-  | `UNAVAILABLE [@value 14]
-  | `DATA_LOSS [@value 15]
-  ]
-[@@deriving show { with_path = false }, enum, eq]
+open Grpc_core
+
+type t = Status.Code.fail_bwd
+
+let show = Status.Code.show_fail_bwd
+let to_enum = Status.Code.fail_bwd_to_enum
+let of_enum = Status.Code.fail_bwd_of_enum

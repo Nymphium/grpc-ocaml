@@ -1,4 +1,5 @@
 open Core
+open Grpc_core
 
 open struct
   let genprefix = Printf.sprintf "%s%s"
@@ -6,49 +7,16 @@ open struct
   let ct_prefix = genprefix "application/grpc"
 end
 
-type t = H2.Headers.t
+type t = Metadata.bwd
 
-let pp = H2.Headers.pp_hum
-
-let show t =
-  let () = pp Format.str_formatter t in
-  Format.flush_str_formatter ()
-;;
-
-let of_list = H2.Headers.of_list
-let to_list = H2.Headers.to_list
-let empty = H2.Headers.empty
-let append_list = H2.Headers.add_list
-let get = Fn.flip H2.Headers.get
-let[@inline] add ?sensitive k v h = H2.Headers.add ?sensitive h k v
-
-let[@inline] add_pseudo_headers ph h =
-  let ph' = List.rev_map ph ~f:(fun (k, v) -> String.concat [ ":"; k ], v) in
-  H2.Headers.of_rev_list (H2.Headers.to_rev_list h @ ph')
-;;
-
-let%test_unit _ =
-  let expected =
-    show
-    @@ of_list
-         [ ":authority", "example.com"; ":path", "/hello"; "foo", "bar"; "qoo", "qux" ]
-  in
-  let actual =
-    show
-    @@ add_pseudo_headers [ "authority", "example.com"; "path", "/hello" ]
-    @@ of_list [ "foo", "bar"; "qoo", "qux" ]
-  in
-  [%test_eq: String.t] actual expected
-;;
-
-(*H2.Headers.add ?sensitive h k v*)
-let[@inline] replace ?sensitive k v h = H2.Headers.add ?sensitive h k v
-
-let[@inline] upsert ?sensitive k v h =
-  match get k h with
-  | Some _ -> replace ?sensitive k v h
-  | _ -> add ?sensitive k v h
-;;
+let eq_key = String.equal
+let pp = Metadata.pp_bwd
+let show = Metadata.show_bwd
+let empty : t = []
+let append_list = ( @ )
+let get k h : Metadata.value option = List.Assoc.find ~equal:eq_key h k
+let[@inline] add k v h : t = List.Assoc.add ~equal:eq_key h k v
+let[@inline] upsert k v h = List.Assoc.remove ~equal:eq_key h k |> add v k
 
 (** manipulate `grpc-timeout` header
  see https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md *)
@@ -65,8 +33,8 @@ end
 module Content_type = struct
   open struct
     let attr = "content-type"
-    let add = upsert ~sensitive:false attr
-    let upsert = upsert ~sensitive:false attr
+    let add = upsert attr
+    let upsert = upsert attr
   end
 
   let get = get attr
@@ -89,5 +57,3 @@ module Trailers = struct
   let set_grpc_status = add status
   let upsert_grpc_status = upsert status
 end
-
-let default = Content_type.set_grpc_proto @@ of_list [ "te", "trailers" ]

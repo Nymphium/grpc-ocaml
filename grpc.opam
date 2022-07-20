@@ -4,6 +4,8 @@ depends: [
   "dune" {< "3.2"}
   "ocaml"
   "core"
+  "ctypes"
+  "ctypes-foreign"
   "core_unix"
   "lwt"
   "hmap"
@@ -21,5 +23,10 @@ depends: [
   "alcotest" { with-test }
 ]
 
-build: ["dune" "build" "-j" jobs "-p" name]
+depexts: [
+  ["grpc"] { os-distribution = "nix" }
+  ["libgrpc-dev"] { os-family = "debian" }
+]
+
+build: ["dune" "build" "--profile" "release" "-j" jobs "-p" name]
 
