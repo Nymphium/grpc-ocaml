@@ -4,6 +4,7 @@ depends: [
   "dune" {< "3.2"}
   "ocaml"
   "core"
+  "ctypes"
   "core_unix"
   "lwt"
   "hmap"
@@ -19,6 +20,10 @@ depends: [
   "ppx_let"
   "ppx_inline_test" { with-test }
   "alcotest" { with-test }
+]
+
+depexts: [
+  "grpc"
 ]
 
 build: ["dune" "build" "-j" jobs "-p" name]

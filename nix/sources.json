@@ -24,15 +24,15 @@
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "nixpkgs": {
-        "branch": "js-015",
+        "branch": "master",
         "description": "Nix Packages collection",
-        "homepage": null,
-        "owner": "bcc32",
+        "homepage": "",
+        "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "f02c708e414723b428ce8221a5bc6084c6c49f5a",
-        "sha256": "0mwg3n1vhjsb0662zv8k3xa250darpi9agr126wz1yghwa8bnfvy",
+        "rev": "ee480d0711d8dcc029f8592f8f7460db4a875496",
+        "sha256": "17r3xvsl11n0ywk22sr0sznr3bcqzgawxr5p9jyxjv8ry982mgvz",
         "type": "tarball",
-        "url": "https://github.com/bcc32/nixpkgs/archive/f02c708e414723b428ce8221a5bc6084c6c49f5a.tar.gz",
+        "url": "https://github.com/nixos/nixpkgs/archive/ee480d0711d8dcc029f8592f8f7460db4a875496.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "ocaml-protoc-plugin": {

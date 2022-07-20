@@ -16,7 +16,7 @@ let
     // (builtins.listToAttrs
         (builtins.map (name: { inherit name; value = src'; }) localPackages) );
 
-  devPackages = [ "utop" "ocaml-lsp-server" ];
+  devPackages = [ "utop" "ocaml-lsp-server" "inspect" ];
 
   # package names with {with-test} in opam;
   # opam2nix does not support the flag at present.
@@ -45,5 +45,5 @@ let
 in
 {
   inherit opam resolve;
-  devInputs = builtins.map (pkg: builtins.getAttr pkg opam) devPackages;
+  devInputs = builtins.map (pkg: builtins.getAttr pkg opam) (devPackages ++ testPackages);
 }
