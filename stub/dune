@@ -1,14 +1,15 @@
 (library
- (name ffi)
- (public_name grpc.ffi)
- (libraries core ctypes lwt.unix )
+ (name stub)
+ (libraries core ctypes lwt.unix)
  (modules :standard \ test playground)
  (flags
   (:standard -w -9-27))
  (ctypes
   (external_library_name grpc)
   (headers
-   (include "grpc/grpc.h" "grpc/census.h" "grpc/grpc_security.h"))
+   (include "grpc/grpc.h" "grpc/census.h" "grpc/grpc_security.h" "grpc/slice.h"
+            "grpc/support/time.h"
+            ))
   (type_description
    (instance Type)
    (functor Type_description))
@@ -22,9 +23,9 @@
 (executable
   (name playground)
   (modules playground)
-  (libraries ffi inspect ctypes))
+  (libraries stub inspect ctypes))
 
 (test
   (name test)
   (modules test)
-  (libraries ffi ctypes alcotest))
+  (libraries stub ctypes alcotest))
