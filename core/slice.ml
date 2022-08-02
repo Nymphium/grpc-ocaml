@@ -4,6 +4,11 @@ open struct
   module M = T.Slice
 end
 
+let allocate ?(size = 0) () =
+  let size = Unsigned.Size_t.of_int size in
+  u @@ F.Slice.malloc size
+;;
+
 let start_ptr = u <@ F.Slice.start_ptr
 let length = Unsigned.Size_t.to_int <~@ F.Slice.length
 
@@ -13,13 +18,13 @@ let set_length slice newlen =
 ;;
 
 let end_ptr = u <@ F.Slice.end_ptr
-let is_empty = ( > ) 0 <~@ F.Slice.is_empty
+let is_empty = ( >= ) 0 <~@ F.Slice.is_empty
 
 let to_ocaml_string slice =
   let%lwt start = start_ptr slice in
   if is_null start
   then Lwt.fail_with "attempt to uninitialized slice to ocaml string"
-  else Lwt.return @@ coerce (ptr uint8_t) string @@ start
+  else Lwt.return @@ coerce (ptr uint8_t) string start
 ;;
 
 let raw_bytes slice =

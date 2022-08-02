@@ -1,5 +1,6 @@
 module T = Stub.Type
 module F = Stub.Functions
+include Fun
 
 let u = Stub.unbox
 let ( >|~= ) s f = Lwt.map f (u s)
@@ -11,6 +12,7 @@ let ( |@.> ) acc f = f @@ deref acc
 let ( let<* ) acc f = acc |@.> f
 let[@inline] ( <@ ) g f x = g (f x)
 let[@inline] ( <~@ ) g f x = Lwt.map g (u @@ f x)
+let[@inline] ( @.* ) t f = Ctypes.getf t f
 
 (** [NULL] *)
 let __reserved__ = Ctypes.null
@@ -51,3 +53,5 @@ module Inspect = struct
     Buffer.contents buf
   ;;
 end
+
+let allocate_string () = Ctypes.(allocate_n string ~count:1)

@@ -9,6 +9,13 @@ end
 
 let inspect = Inspect.make_structure (module M.T)
 
+let allocate () =
+  let finalise t = Lwt.async @@ fun () -> u @@ F.Byte_buffer.destroy @@ Ctypes.addr t in
+  let t = Ctypes.make ~finalise T.Byte_buffer.t in
+  t @. T.Byte_buffer.reserved <-@ __reserved__;
+  Ctypes.addr t
+;;
+
 let from_string s =
   let*? slice = F.Slice.from_static_string s in
   let*? buf = F.Byte_buffer.create_raw (Ctypes.addr slice) (Unsigned.Size_t.of_int 1) in

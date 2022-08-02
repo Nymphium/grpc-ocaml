@@ -44,7 +44,7 @@ let update_status_from_server op status =
         it @. D.Send_status_from_server.status <-@ status.Status.code;
         it @. D.Send_status_from_server.status_details <-@ status_details;
         it @. D.Send_status_from_server.trailing_metadata
-        <-@ deref @@ metadata @. T.Metadata.Array.metadata;
+        <-@ getf metadata T.Metadata.Array.metadata;
         it
       in
       it @. D.send_status_from_server <-@ send_status_from_server;
@@ -56,20 +56,23 @@ let update_status_from_server op status =
   Lwt.return_unit
 ;;
 
+(* let finalise op = *)
+(* let data = getf op M.data in *)
+
 let make (fwd : fwd) =
   let op = Ctypes.make M.t in
   op @. M.op <-@ to_op_type fwd;
   op @. M.flags <-@ Unsigned.UInt32.zero;
   match fwd with
+  | `Send_initial_metadata [] -> Lwt.return op
   | `Send_initial_metadata md ->
-    let%lwt md' =
-      (fun a -> deref @@ a @. T.Metadata.Array.metadata) =|< Metadata.make md
-    in
+    let%lwt md' = flip getf T.Metadata.Array.metadata =|< Metadata.make md in
     let data =
       let it = Ctypes.make D.t in
       let send_initial_metadata =
         let it = Ctypes.make D.Send_initial_metadata.t in
         let size = List.length md |> Unsigned.Size_t.of_int in
+        it @. D.Send_initial_metadata.metadata <-@ md';
         it @. D.Send_initial_metadata.metadata <-@ md';
         it @. D.Send_initial_metadata.count <-@ size;
         it
@@ -97,7 +100,7 @@ let make (fwd : fwd) =
     let%lwt () = update_status_from_server op st in
     Lwt.return op
   | `Recv_initial_metadata ->
-    let%lwt md = Ctypes.addr =|< Metadata.make [] in
+    let%lwt md = Ctypes.addr =|< Metadata.allocate () in
     let data =
       let it = Ctypes.make D.t in
       let recv_initial_metadata = Ctypes.make D.Recv_initial_metadata.t in
@@ -114,7 +117,7 @@ let make (fwd : fwd) =
   | `Recv_message ->
     let data = Ctypes.make D.t in
     let it = Ctypes.make D.Recv_message.t in
-    let%lwt msg = Byte_buffer.from_string "" in
+    let msg = Byte_buffer.allocate () in
     it @. D.Recv_message.recv_message <-@ msg;
     data @. D.recv_message <-@ it;
     op @. M.data <-@ data;
@@ -122,6 +125,13 @@ let make (fwd : fwd) =
   | `Recv_status_on_client ->
     let data = Ctypes.make D.t in
     let it = Ctypes.make D.Recv_status_on_client.t in
+    let%lwt slice = Ctypes.addr =|< Slice.allocate ~size:10 () in
+    let%lwt md = Ctypes.addr =|< Metadata.allocate () in
+    let status = Status.allocate () in
+    it @. D.Recv_status_on_client.trailing_metadata <-@ md;
+    it @. D.Recv_status_on_client.status <-@ status;
+    it @. D.Recv_status_on_client.status_details <-@ Some slice;
+    it @. D.Recv_status_on_client.error_string <-@ None;
     data @. D.recv_status_on_client <-@ it;
     op @. M.data <-@ data;
     Lwt.return op

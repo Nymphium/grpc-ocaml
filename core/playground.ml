@@ -119,45 +119,43 @@ let () =
   @@
   let open Lwt.Syntax in
   let* ch = Grpc_core.Channel.make "localhost:21090" [] in
-  (* let* st = Grpc_core.Channel.get_connectivity_state ~try_to_connect:true ch in *)
   let* target = Grpc_core.Channel.get_target ch in
   let* call = Grpc_core.Channel.make_call ~channel:ch ~methd:"/grpc_test.Echo/Greet" () in
-  let* () = Lwt_io.printf "\n\n\n>>> send message to %s\n\n\n" target in
-  (* let* _ = *)
-  (* let md = Ctypes.make Stub.T.Metadata.t in *)
-  (* let* k = Grpc_core.Slice.from_static_string "x-request-id" in *)
-  (* let* v = Grpc_core.Slice.from_static_string "fuga" in *)
-  (* let () = *)
-  (* let open Ctypes in *)
-  (* md @. Stub.T.Metadata.key <-@ k; *)
-  (* md @. Stub.T.Metadata.value <-@ v *)
-  (* in *)
-  (* Ctypes.format Stub.T.Metadata.t Format.std_formatter md; *)
-  (* flush stdout; *)
-  (* let* () = Lwt_io.printl "" in *)
-  (* let* () = Lwt_io.printl =<< Grpc_core.Slice.to_ocaml_string k in *)
-  (* let* () = Lwt_io.printl =<< Grpc_core.Slice.to_ocaml_string v in *)
-  (* Lwt.return_unit *)
-  (* in *)
-  let* _ =
-    Grpc_core.Call.run_batch
-      call
-      [ `Send_initial_metadata [ "x-md-msg", "hoge" ]
-      ; `Send_message "hi"
-      ; `Send_close_from_client
-      ; `Recv_message
-      ; `Recv_initial_metadata (* ; `Recv_status_on_client *)
-      ]
+  let* () =
+    let* st = Grpc_core.Slice.from_static_string "hoge" in
+    let* len = Grpc_core.Slice.length st in
+    let* st' = Grpc_core.Slice.to_ocaml_string st in
+    let* () = Grpc_core.Slice.unref st in
+    Lwt_io.printlf "len: %d; st: %s" len st'
   in
-  (* let* _ = *)
-  (* Grpc_core.Call.run_batch *)
-  (* call *)
-  (* [ `Send_close_from_client; `Recv_message; `Recv_initial_metadata ] *)
-  (* in *)
-  (* let () = *)
-  (* Inspect.Sexpr.dump ops; *)
-  (* Inspect.Sexpr.dump t; *)
-  (* flush stdout *)
-  (* in *)
+  let* () = Lwt_io.printf "\n\n\n>>> send message to %s\n\n\n" target in
+  let* { recv_initial_metadata = metadata
+       ; recv_message
+       ; recv_status_on_client = { error; status; metadata = tr; details }
+       }
+    =
+    Grpc_core.Call.request ~metadata:[ "x-md-msg", "hoge" ] ~message:"hello" call
+  in
+  let* () =
+    let status = Stub.T.Status_code.show status in
+    let error = Option.value ~default:"" error in
+    let details = Option.value ~default:"" details in
+    let tr =
+      List.map (fun (k, v) -> Printf.sprintf "{%s: %s}" k v) tr |> String.concat ", "
+    in
+    Lwt_io.printlf
+      "{ status: %s; error: %s; details: %s; tr: %s }"
+      status
+      error
+      details
+      tr
+  in
+  let () =
+    Inspect.Sexpr.dump recv_message;
+    (* Inspect.Sexpr.dump recv_status_on_client; *)
+    Inspect.Sexpr.dump metadata;
+    (* Inspect.Sexpr.dump t; *)
+    flush stdout
+  in
   Lwt.return_unit
 ;;

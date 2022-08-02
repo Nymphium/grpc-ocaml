@@ -9,6 +9,7 @@ type hoge_values
 let hoge : hoge_values structure typ = Ctypes.structure "hoge_values"
 let hoge_f1 = Ctypes.field hoge "f1" Ctypes.string
 let () = Ctypes.seal hoge
+let hoge_new () = Ctypes.make hoge
 
 (** wrapped call data *)
 type t =
@@ -21,7 +22,7 @@ type res_res =
   { status : T.Status_code.t
   ; details : string option
   ; metadata : (string * string) list
-  ; error : string
+  ; error : string option
   }
 
 type res_raw =
@@ -50,9 +51,9 @@ let run_batch t ops =
   in
   let%lwt inf = Timespec.(inf_future Clock_type.realtime) in
   let%lwt ev = Completion_queue.pluck t.cq inf tag in
-  if deref @@ ev @. T.Event.success < 1
+  if ev @.* T.Event.success < 1
   then (
-    let st = deref @@ ev @. T.Event.typ in
+    let st = ev @.* T.Event.typ in
     Lwt.fail_with @@ Printf.sprintf "run_batch failed(%s)" @@ T.Completion.Type.show st)
   else Lwt.return (tag, ops)
 ;;
@@ -86,36 +87,38 @@ let request ?(metadata = []) ?message t =
     Lwt.all
     @@ Fun.flip List.map o
     @@ fun op ->
-    let data = deref @@ op @. T.Op.data in
-    match deref @@ op @. T.Op.op with
+    let data = op @.* T.Op.data in
+    match op @.* T.Op.op with
     | T.Op.Type.RECV_INITIAL_METADATA ->
-      let it = deref @@ data @. T.Op.Data.recv_initial_metadata in
-      let md =
-        deref @@ deref @@ it @. T.Op.Data.Recv_initial_metadata.recv_initial_metadata
-      in
+      let it = data @.* T.Op.Data.recv_initial_metadata in
+      let md = deref @@ it @.* T.Op.Data.Recv_initial_metadata.recv_initial_metadata in
       let%lwt md = Metadata.to_fwd md in
       Lwt_mvar.put recv_initial_metadata md
     | T.Op.Type.RECV_MESSAGE ->
-      let it = deref @@ data @. T.Op.Data.recv_message in
-      let msg_ptr = deref @@ it @. T.Op.Data.Recv_message.recv_message in
+      let it = data @.* T.Op.Data.recv_message in
+      let msg_ptr = it @.* T.Op.Data.Recv_message.recv_message in
       let%lwt msg = Byte_buffer.to_string msg_ptr in
       Lwt_mvar.put recv_message msg
     | T.Op.Type.RECV_STATUS_ON_CLIENT ->
-      let it = deref @@ data @. T.Op.Data.recv_status_on_client in
+      let it = data @.* T.Op.Data.recv_status_on_client in
       let%lwt md =
-        let it =
-          deref @@ deref @@ it @. T.Op.Data.Recv_status_on_client.trailing_metadata
-        in
+        let it = deref @@ it @.* T.Op.Data.Recv_status_on_client.trailing_metadata in
         Metadata.to_fwd it
       in
-      let status = deref @@ deref @@ it @. T.Op.Data.Recv_status_on_client.status in
+      let status = deref @@ it @.* T.Op.Data.Recv_status_on_client.status in
       let%lwt details =
-        let it = deref @@ it @. T.Op.Data.Recv_status_on_client.status_details in
+        let it = it @.* T.Op.Data.Recv_status_on_client.status_details in
         match it with
-        | Some slice -> Slice.to_ocaml_string !@slice >|= fun s -> Some s
+        | Some slice ->
+          let%lwt s' = Slice.to_ocaml_string !@slice in
+          Lwt.return (Some s')
         | None -> Lwt.return None
       in
-      let error = deref @@ deref @@ it @. T.Op.Data.Recv_status_on_client.error_string in
+      let error =
+        match it @.* T.Op.Data.Recv_status_on_client.error_string with
+        | Some s -> Some (deref s)
+        | None -> None
+      in
       Lwt_mvar.put recv_status_on_client { status; error; metadata = md; details }
     | _ -> Lwt.return_unit
   in
