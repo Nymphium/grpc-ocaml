@@ -118,8 +118,6 @@ let string_of_md tr =
 let () =
   let () = Lwt_main.at_exit Grpc_core.Top.shutdown in
   Lwt_main.run
-  (*@@ Lwt.finalize Grpc_core.Top.shutdown*)
-  (*@@ fun () ->*)
   @@
   let open Lwt.Syntax in
   let* ch = Grpc_core.Channel.make "localhost:21090" [] in
@@ -133,26 +131,22 @@ let () =
     Lwt_io.printlf "len: %d; st: %s" len st'
   in
   let* () = Lwt_io.printf "\n\n\n>>> send message to %s\n\n\n" target in
-  let* { recv_initial_metadata = metadata
-       ; recv_message
-       ; recv_status_on_client = { error; status; metadata = tr; details }
-       }
-    =
-    Grpc_core.Call.request ~metadata:[ "x-md-msg", "hoge" ] ~message:"hello" call
+  let* res =
+    Grpc_core.Call.unary ~metadata:[ "x-md-msg", "hoge" ] ~message:"hello" call
   in
   let* () =
-    let recv_message = Option.value ~default:"" recv_message in
-    let status = Stub.T.Status_code.show status in
-    let error = Option.value ~default:"" error in
-    let details = Option.value ~default:"" details in
-    let tr = string_of_md (tr @ metadata) in
-    Lwt_io.printlf
-      {|{ recv_message: "%s"; status: %s; error: "%s"; details: "%s"; tr: [%s] }|}
-      recv_message
-      status
-      error
-      details
-      tr
+    match res with
+    | `Ok (msg, md) ->
+      Lwt_io.printlf
+        {|{ status:"ok"; msg: "%s"; metadata: [%s] }|}
+        (Option.value ~default:"" msg)
+      @@ string_of_md md
+    | `Error (st, msg, md) ->
+      Lwt_io.printlf
+        {|{ status: "%s"; msg: "%s"; metadata: [%s] }|}
+        (Grpc_core.Status.Code.show st)
+        (Option.value ~default:"" msg)
+        (string_of_md md)
   in
   Lwt.return_unit
 ;;

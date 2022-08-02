@@ -21,15 +21,20 @@ type t =
 type res_res =
   { status : T.Status_code.t
   ; details : string option
-  ; metadata : (string * string) list
+  ; metadata : Metadata.fwd
   ; error : string option
   }
 
 type res_raw =
-  { recv_initial_metadata : (string * string) list
+  { recv_initial_metadata : Metadata.fwd
   ; recv_message : string option
   ; recv_status_on_client : res_res
   }
+
+type res =
+  [ `Ok of string option * Metadata.fwd
+  | `Error of Status.Code.t * string option * Metadata.fwd
+  ]
 
 let run_batch t ops =
   let size_ops = List.length ops |> Unsigned.Size_t.of_int in
@@ -58,7 +63,7 @@ let run_batch t ops =
   else Lwt.return (tag, ops)
 ;;
 
-let request ?(metadata = []) ?message t =
+let unary ?(metadata = []) ?message t =
   let ops =
     let it =
       [ `Send_initial_metadata metadata
@@ -91,7 +96,7 @@ let request ?(metadata = []) ?message t =
     match op @.* T.Op.op with
     | T.Op.Type.RECV_INITIAL_METADATA ->
       let it = data @.* T.Op.Data.recv_initial_metadata in
-      let md = deref @@ it @.* T.Op.Data.Recv_initial_metadata.recv_initial_metadata in
+      let md = it @.* T.Op.Data.Recv_initial_metadata.recv_initial_metadata in
       let%lwt md = Metadata.to_fwd md in
       Lwt_mvar.put recv_initial_metadata md
     | T.Op.Type.RECV_MESSAGE ->
@@ -102,13 +107,12 @@ let request ?(metadata = []) ?message t =
     | T.Op.Type.RECV_STATUS_ON_CLIENT ->
       let it = data @.* T.Op.Data.recv_status_on_client in
       let%lwt md =
-        let it = deref @@ it @.* T.Op.Data.Recv_status_on_client.trailing_metadata in
+        let it = it @.* T.Op.Data.Recv_status_on_client.trailing_metadata in
         Metadata.to_fwd it
       in
       let status = deref @@ it @.* T.Op.Data.Recv_status_on_client.status in
       let%lwt details =
-        let it = it @.* T.Op.Data.Recv_status_on_client.status_details in
-        match it with
+        match it @.* T.Op.Data.Recv_status_on_client.status_details with
         | Some slice ->
           let%lwt s' = Slice.to_ocaml_string !@slice in
           Lwt.return (Some s')
@@ -124,6 +128,13 @@ let request ?(metadata = []) ?message t =
   in
   let%lwt recv_initial_metadata = Lwt_mvar.take recv_initial_metadata in
   let%lwt recv_message = Lwt_mvar.take recv_message in
-  let%lwt recv_status_on_client = Lwt_mvar.take recv_status_on_client in
-  Lwt.return { recv_initial_metadata; recv_message; recv_status_on_client }
+  let%lwt { error; status; metadata = tr; details = _ } =
+    Lwt_mvar.take recv_status_on_client
+  in
+  let md = recv_initial_metadata @ tr in
+  Lwt.return
+  @@
+  match status with
+  | Status.Code.OK -> `Ok (recv_message, md)
+  | _ -> `Error (status, error, md)
 ;;

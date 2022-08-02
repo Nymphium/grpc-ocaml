@@ -1,13 +1,12 @@
 (library
-  (name grpc_core)
-  (public_name grpc.core)
-  (modules :standard \ playground)
-  (libraries grpc.stub lwt)
-  (preprocess
-    (staged_pps lwt_ppx)))
+ (name grpc_core)
+ (public_name grpc.core)
+ (modules :standard \ play_client)
+ (libraries grpc.stub lwt)
+ (preprocess
+  (staged_pps lwt_ppx)))
 
 (executable
-  (name playground)
-  (modules playground)
-  (libraries inspect grpc.core))
-
+ (name play_client)
+ (modules play_client)
+ (libraries inspect grpc.core))

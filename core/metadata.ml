@@ -47,11 +47,13 @@ let make fwd =
      arr
 ;;
 
-let to_fwd md =
-  let size = Unsigned.Size_t.to_int @@ md @.* T.Metadata.Array.count in
-  let md' = CArray.(to_list @@ flip from_ptr size @@ md @.* T.Metadata.Array.metadata) in
+let to_fwd arr =
+  let size = Unsigned.Size_t.to_int !@(arr |-> T.Metadata.Array.count) in
+  let arr' =
+    CArray.(to_list @@ flip from_ptr size !@(arr |-> T.Metadata.Array.metadata))
+  in
   Lwt.all
-  @@ flip List.map md'
+  @@ flip List.map arr'
   @@ fun md ->
   let%lwt k = Slice.to_ocaml_string @@ md @.* T.Metadata.key in
   let%lwt v = Slice.to_ocaml_string @@ md @.* T.Metadata.value in
