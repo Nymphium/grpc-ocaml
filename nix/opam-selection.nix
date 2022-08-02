@@ -293,6 +293,21 @@ in
         hash = "sha256:0zp0q9213an1spx8ps70xlm9rhmjfqmixh59b3mb7dsj1r6p19i7";
       };
     };
+    conf-libffi = 
+    {
+      pname = "conf-libffi";
+      version = "2.0.0";
+      src = null;
+      opamInputs = {
+                     inherit (selection) conf-pkg-config;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/conf-libffi/conf-libffi.2.0.0";
+        hash = "sha256:09yxvlij8k2mrbwm1lphjqdrlk9r68jwzng6gfp94qqhsnpndj7n";
+      };
+      buildInputs = [ (pkgs.libffi) ];
+    };
     conf-libssl = 
     {
       pname = "conf-libssl";
@@ -455,6 +470,21 @@ in
       {
         package = "packages/ctypes/ctypes.0.20.1";
         hash = "sha256:1sziacwyjlhn5z1qylihyla76v7lifwi6bwdwlfiwbcdykssdi7g";
+      };
+    };
+    ctypes-foreign = 
+    {
+      pname = "ctypes-foreign";
+      version = "0.18.0";
+      src = null;
+      opamInputs = 
+      {
+        inherit (selection) conf-pkg-config conf-libffi;
+      };
+      opamSrc = repoPath (repos.opam-repository.src) 
+      {
+        package = "packages/ctypes-foreign/ctypes-foreign.0.18.0";
+        hash = "sha256:0mr8z6hjdd8073zya2w0v5m5yv8scq90vw2d1paanib66m4y5sgm";
       };
     };
     dune = 
@@ -758,7 +788,7 @@ in
       {
         inherit (selection) uri ppx_yojson_conv ppx_let ppx_deriving
         ocaml-protoc-plugin ocaml lwt_ssl lwt_ppx lwt logs hmap h2-lwt-unix
-        dune ctypes core_unix core;
+        dune ctypes-foreign ctypes core_unix core;
       };
       opamSrc = "grpc.opam";
       buildInputs = [ (pkgs.grpc) ];

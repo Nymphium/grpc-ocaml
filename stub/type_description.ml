@@ -2,60 +2,80 @@ open Ctypes
 
 (* https://grpc.github.io/grpc/core/grpc_8h.html#afd22cfbc549db65ee265335c3264a57b *)
 module Types (F : Ctypes.TYPE) = struct
-  module F = F
   open F
+  module F = F
 
   open struct
-    let enum_handler name idx = failwith @@ Printf.sprintf "unexpected enum value in %s: %Ld" name idx
+    let enum_handler name idx =
+      failwith @@ Printf.sprintf "unexpected enum value in %s: %Ld" name idx
+    ;;
+
     let enum_field' prefix name = constant (Printf.sprintf "%s_%s" prefix name) int64_t
     let enum_field name = constant name int64_t
     let enum' name enumr = enum ~typedef:true name ~unexpected:(enum_handler name) enumr
-  end
 
-  module Struct (N : sig
-    val name : string
-  end) =
-  struct
-    type t
+    (** Helper module for "tagged" struct:
+   ```c
+   typedef struct foo {
+     int bar;
+   } foo
+   ```
 
-    let t : t structure typ = structure N.name
-    let ( <-. ) name ty = field t name ty
-  end
+   should be encoded as:
 
-  module Anon_struct (N : sig
-    val name : string
-  end) =
-  struct
-    type t
+   ```ocaml
+   module Foo = struct
+     include Struct(struct let name = "foo" end)
+     let bar = "bar" <-. int
+     let () = seal t
+   end
+   ```
+    **)
+    module Struct (N : sig
+      val name : string
+    end) =
+    struct
+      type t
 
-    let (t : t structure typ), anon =
-      let t' = structure @@ Printf.sprintf "__anon_%s" N.name in
-      typedef t' N.name, t'
-    ;;
+      let t : t structure typ = structure N.name
+      let ( <-. ) name ty = field t name ty
+    end
 
-    let ( <-. ) name ty = field t name ty
-  end
+    module Anon_struct (N : sig
+      val name : string
+    end) =
+    struct
+      type t
 
-  module Union (N : sig
-    val name : string
-  end) =
-  struct
-    type t
+      let (t : t structure typ), anon =
+        let t' = structure @@ Printf.sprintf "__anon_%s" N.name in
+        typedef t' N.name, t'
+      ;;
 
-    let t : t union typ = union N.name
-    let ( <-. ) name ty = field t name ty
-  end
+      let ( <-. ) name ty = field t name ty
+    end
 
-  module Abs (N : sig end) =
-  (* : sig *)
-  (* type t *)
+    module Union (N : sig
+      val name : string
+    end) =
+    struct
+      type t
 
-  (* val t : t typ *)
-  (* end *)
-  struct
-    type t = unit ptr
+      let t : t union typ = union N.name
+      let ( <-. ) name ty = field t name ty
+    end
 
-    let t : t typ = ptr void
+    module Abs (N : sig end) =
+    (* : sig *)
+    (* type t *)
+
+    (* val t : t typ *)
+    (* end *)
+    struct
+      type t = unit ptr
+
+      let t : t typ = ptr void
+    end
   end
 
   module Common = struct
@@ -65,7 +85,7 @@ module Types (F : Ctypes.TYPE) = struct
   type serving_status_update
 
   let grpc_max_completion_queue_pluckers =
-    constant "GRPC_MAX_COMPLETION_QUEUE_PLUCKERS" int
+    constant "GRPC_MAX_COMPLETION_QUEUE_PLUCKERS" int64_t
   ;;
 
   module Slice = struct
@@ -81,7 +101,11 @@ module Types (F : Ctypes.TYPE) = struct
       ;;
 
       let length = "length" <-. uint8_t
-      let bytes = "bytes" <-. array grpc_slice_inlined_size uint8_t
+
+      (** XXX: precise data size *)
+      let bytes = "bytes" <-. ptr uint8_t
+
+      (* let bytes = "bytes" <-. array grpc_slice_inlined_size uint8_t *)
       let () = seal t
     end
 
@@ -110,23 +134,20 @@ module Types (F : Ctypes.TYPE) = struct
         | TAIL
         | HEAD
         | BOTH
+      [@@deriving show { with_path = false }]
 
       let enum_field = enum_field' "GRPC_SLICE_REF"
       let tail = enum_field "TAIL"
       let head = enum_field "HEAD"
       let both = enum_field "BOTH"
-
-      (* let t = enum "grpc_slice_ref_whom" [ TAIL, tail; HEAD, head; BOTH, both ] *)
-
-      (** XXX: it should be "grpc_slice_ref_whom" *)
-      let t = int64_t
+      let t = enum' "grpc_slice_ref_whom" [ TAIL, tail; HEAD, head; BOTH, both ]
     end
 
     include Struct (struct
       let name = "grpc_slice"
     end)
 
-    let refcount = "refcount" <-. ptr Refcounted.t
+    let refcount = "refcount" <-. Refcounted.t
     let data = "data" <-. Data.t
     let () = seal t
 
@@ -150,16 +171,13 @@ module Types (F : Ctypes.TYPE) = struct
   end
 
   module Compression = struct
-    let request_algorithm_md_key =
-      const "GRPC_COMPRESSION_REQUEST_ALGORITHM_MD_KEY" string
-    ;;
-
     module Algorithm = struct
       type t =
         | NONE
         | DEFLATE
         | GZIP
         | ALGORITHMS_COUNT
+      [@@deriving show { with_path = false }]
 
       let enum_field = enum_field' "GRPC_COMPRESS"
       let none = enum_field "NONE"
@@ -181,6 +199,7 @@ module Types (F : Ctypes.TYPE) = struct
         | MED
         | HIGH
         | COUNT
+      [@@deriving show { with_path = false }]
 
       let enum_field = enum_field' "GRPC_COMPRESS_LEVEL"
       let none = enum_field "NONE"
@@ -246,7 +265,7 @@ module Types (F : Ctypes.TYPE) = struct
     end
 
     module Type = struct
-      type t = RAW
+      type t = RAW [@@deriving show { with_path = false }]
 
       let raw = enum_field "GRPC_BB_RAW"
       let t = enum' "grpc_byte_buffer_type" [ RAW, raw ]
@@ -260,6 +279,30 @@ module Types (F : Ctypes.TYPE) = struct
     let typ = "type" <-. Type.t
     let data = "data" <-. Data.t
     let () = seal t
+
+    module Reader = struct
+      module Current = struct
+        include Union (struct
+          let name = "grpc_byte_buffer_reader_current"
+        end)
+
+        let index = "index" <-. uint
+        let () = seal t
+      end
+
+      open struct
+        let u = t
+      end
+
+      include Struct (struct
+        let name = "grpc_byte_buffer_reader"
+      end)
+
+      let buffer_in = "buffer_in" <-. ptr u
+      let buffer_out = "buffer_out" <-. ptr u
+      let current = "current" <-. Current.t
+      let () = seal t
+    end
   end
 
   (** https://grpc.github.io/grpc/core/structgrpc__metadata.html *)
@@ -293,6 +336,7 @@ module Types (F : Ctypes.TYPE) = struct
         | STRING
         | INTEGER
         | POINTER
+      [@@deriving show { with_path = false }]
 
       let enum_field = enum_field' "GRPC_ARG"
       let string = enum_field "STRING"
@@ -352,6 +396,7 @@ module Types (F : Ctypes.TYPE) = struct
         | REALTIME
         | PRECISE
         | TIMESPAN
+      [@@deriving show { with_path = false }]
 
       let enum_field = enum_field' "GPR"
       let monotonic = enum_field "CLOCK_MONOTONIC"
@@ -378,6 +423,36 @@ module Types (F : Ctypes.TYPE) = struct
     let tv_nsec = "tv_nsec" <-. int32_t
     let clock_type = "clock_type" <-. Clock_type.t
     let () = seal t
+  end
+
+  module Log = struct
+    module Severity = struct
+      type t =
+        | DEBUG
+        | ERROR
+        | INFO
+      [@@deriving show { with_path = false }]
+
+      let enum_field = enum_field' "GPR_LOG_SEVERITY"
+      let debug = enum_field "DEBUG"
+      let info = enum_field "INFO"
+      let error = enum_field "ERROR"
+      let t = enum' "gpr_log_severity" [ DEBUG, debug; INFO, info; ERROR, error ]
+    end
+
+    module Func_args = struct
+      include Struct (struct
+        let name = "gpr_log_func_args"
+      end)
+
+      let file = "file" <-. string
+      let line = "line" <-. int
+      let severity = "severity" <-. Severity.t
+      let message = "message" <-. string
+      let () = seal t
+    end
+
+    let log_func = Foreign.funptr @@ ptr Func_args.t @-> returning void
   end
 
   (** https://grpc.github.io/grpc/core/structgrpc__call__details.html *)
@@ -440,6 +515,7 @@ module Types (F : Ctypes.TYPE) = struct
         | ERROR_BATCH_TOO_BIG
         | ERROR_PAYLOAD_TYPE_MISMATCH
         | ERROR_COMPLETION_QUEUE_SHUTDOWN
+      [@@deriving show { with_path = false }]
 
       let enum_field = enum_field' "GRPC_CALL"
       let enum_efield = enum_field' "GRPC_CALL_ERROR"
@@ -490,6 +566,7 @@ module Types (F : Ctypes.TYPE) = struct
         | QUEUE_SHUTDOWN
         | QUEUE_TIMEOUT
         | OP_COMPLETE
+      [@@deriving show { with_path = false }]
 
       let queue_shutdown = enum_field "GRPC_QUEUE_SHUTDOWN"
       let queue_timeout = enum_field "GRPC_QUEUE_TIMEOUT"
@@ -535,6 +612,7 @@ module Types (F : Ctypes.TYPE) = struct
         | NEXT
         | PLUCK
         | CALLBACK
+      [@@deriving show { with_path = false }]
 
       let next = enum_field "GRPC_CQ_NEXT"
       let pluck = enum_field "GRPC_CQ_PLUCK"
@@ -550,6 +628,7 @@ module Types (F : Ctypes.TYPE) = struct
         | DEFAULT_POLLING
         | NON_LISTENING
         | NON_POLLING
+      [@@deriving show { with_path = false }]
 
       let default_polling = enum_field "GRPC_CQ_DEFAULT_POLLING"
       let non_listening = enum_field "GRPC_CQ_NON_LISTENING"
@@ -597,6 +676,7 @@ module Types (F : Ctypes.TYPE) = struct
       | UNAVAILABLE
       | DATA_LOSS
       | DO_NOT_USE
+    [@@deriving show { with_path = false }]
 
     let enum_field = enum_field' "GRPC_STATUS"
     let ok = enum_field "OK"
@@ -654,6 +734,7 @@ module Types (F : Ctypes.TYPE) = struct
         | RECV_MESSAGE
         | RECV_STATUS_ON_CLIENT
         | RECV_CLOSE_ON_SERVER
+      [@@deriving show { with_path = false }]
 
       let send_initial_metadata = enum_field "GRPC_OP_SEND_INITIAL_METADATA"
       let send_message = enum_field "GRPC_OP_SEND_MESSAGE"
@@ -702,7 +783,7 @@ module Types (F : Ctypes.TYPE) = struct
         end)
 
         let count = "count" <-. size_t
-        let metadata = "metadata" <-. Metadata.t
+        let metadata = "metadata" <-. ptr Metadata.t
 
         let maybe_compression_level =
           "maybe_compression_level" <-. Maybe_compression_level.t
@@ -728,7 +809,7 @@ module Types (F : Ctypes.TYPE) = struct
         let trailing_metadata_count = "trailing_metadata_count" <-. size_t
         let trailing_metadata = "trailing_metadata" <-. ptr Metadata.t
         let status = "status" <-. Status_code.t
-        let status_details = "status_details" <-. ptr Slice.t
+        let status_details = "status_details" <-. ptr_opt Slice.t
         let () = seal t
       end
 
@@ -757,7 +838,7 @@ module Types (F : Ctypes.TYPE) = struct
 
         let trailing_metadata = "trailing_metadata" <-. ptr Metadata.Array.t
         let status = "status" <-. ptr Status_code.t
-        let status_details = "status_details" <-. ptr Slice.t
+        let status_details = "status_details" <-. ptr_opt Slice.t
         let error_string = "error_string" <-. ptr string
         let () = seal t
       end
@@ -808,6 +889,7 @@ module Types (F : Ctypes.TYPE) = struct
       | READY
       | TRANSIENT_FAILURE
       | SHUTDOWN
+    [@@deriving show { with_path = false }]
 
     let idle = enum_field "GRPC_CHANNEL_IDLE"
     let connecting = enum_field "GRPC_CHANNEL_CONNECTING"
@@ -847,6 +929,7 @@ module Types (F : Ctypes.TYPE) = struct
       type t =
         | NONE
         | READ_INITIAL_BYTE_BUFFER
+      [@@deriving show { with_path = false }]
 
       let none = enum_field "GRPC_SRM_PAYLOAD_NONE"
 
@@ -877,11 +960,70 @@ module Types (F : Ctypes.TYPE) = struct
             @@ ptr void
             @-> string
             (* XXX: should be "Serving_status_update.t" *)
-            (* @-> Serving_status_update.t *) @-> ptr void
+            (* @-> Serving_status_update.t *)
+            @-> ptr void
             @-> returning void
       ;;
 
       let () = seal t
+    end
+  end
+
+  module Propagation_bits = struct
+    type t = Unsigned.uint32 const
+
+    let deadline = constant "GRPC_PROPAGATE_DEADLINE" uint32_t
+    let census_stats_context = constant "GRPC_PROPAGATE_CENSUS_STATS_CONTEXT" uint32_t
+    let census_tracing_context = constant "GRPC_PROPAGATE_CENSUS_TRACING_CONTEXT" uint32_t
+    let cancellation = constant "GRPC_PROPAGATE_CANCELLATION" uint32_t
+    let defaults = constant "GRPC_PROPAGATE_DEFAULTS" uint32_t
+  end
+
+  module Sync = struct
+    module Mu = Abs ()
+    module Cv = Abs ()
+    module Once = Abs ()
+  end
+
+  module Atm = struct
+    let t = typedef intptr_t "gpr_atm"
+  end
+
+  module Gpr_event = struct
+    include Anon_struct (struct
+      let name = "gpr_event"
+    end)
+
+    let state = "state" <-. Atm.t
+    let () = seal t
+  end
+
+  module Gpr_refcount = struct
+    include Anon_struct (struct
+      let name = "gpr_refcount"
+    end)
+
+    let count = "count" <-. Atm.t
+    let () = seal t
+  end
+
+  module Gpr_stats_counter = struct
+    include Anon_struct (struct
+      let name = "gpr_stats_counter"
+    end)
+
+    let value = "value" <-. Atm.t
+    let () = seal t
+  end
+
+  module Flags = struct
+    module Write = struct
+      type t = Unsigned.uint32 const
+
+      let buffer_hint = constant "GRPC_WRITE_BUFFER_HINT" uint32_t
+      let no_compress = constant "GRPC_WRITE_NO_COMPRESS" uint32_t
+      let through = constant "GRPC_WRITE_THROUGH" uint32_t
+      let used_mask = constant "GRPC_WRITE_USED_MASK" uint32_t
     end
   end
 end

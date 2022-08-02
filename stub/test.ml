@@ -3,7 +3,7 @@ let () =
   run
     "ffi"
     [ ( "type"
-      , let open Ffi.Type in
+      , let open Stub.Type in
         [ (test_case "slice" `Quick @@ fun () -> ignore @@ Ctypes.make Slice.t)
         ; (test_case "slice_inlined" `Quick
           @@ fun () -> ignore @@ Ctypes.make Slice.Inlined.t)

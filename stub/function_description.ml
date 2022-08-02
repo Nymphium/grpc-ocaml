@@ -397,7 +397,17 @@ module Functions (F : Ctypes.FOREIGN) = struct
   end
 
   module Slice = struct
-    let t = T.Slice.t
+    open struct
+      module M = T.Slice
+
+      let t = M.t
+    end
+
+    let start_ptr = "GRPC_SLICE_START_PTR" @:: t @-> returning (ptr uint8_t)
+    let length = "GRPC_SLICE_LENGTH" @:: t @-> returning size_t
+    let set_length = "GRPC_SLICE_SET_LENGTH" @:: t @-> size_t @-> returning void
+    let end_ptr = "GRPC_SLICE_END_PTR" @:: t @-> returning (ptr uint8_t)
+    let is_empty = "GRPC_SLICE_IS_EMPTY" @:: t @-> returning int
     let empty = "grpc_empty_slice" @:: void @-> returning t
 
     let buf_start_eq =
@@ -468,6 +478,104 @@ module Functions (F : Ctypes.FOREIGN) = struct
     let sub_no_ref = "grpc_slice_sub_no_ref" @:: t @-> size_t @-> size_t @-> returning t
     let to_c_string = "grpc_slice_to_c_string" @:: t @-> returning string
     let unref = "grpc_slice_unref" @:: t @-> returning void
+
+    module Buffer = struct
+      open struct
+        module U = M
+        module M = T.Slice.Buffer
+
+        let u = t
+        let t = ptr M.t
+      end
+
+      let init = "grpc_slice_buffer_init" @:: t @-> returning void
+      let destroy = "grpc_slice_buffer_destroy" @:: t @-> returning void
+      let add = "grpc_slice_buffer_add" @:: t @-> u @-> returning void
+      let add_indexed = "grpc_slice_buffer_add_indexed" @:: t @-> u @-> returning size_t
+      let addn = "grpc_slice_buffer_addn" @:: t @-> ptr u @-> size_t @-> returning void
+
+      let tiny_add =
+        "grpc_slice_buffer_tiny_add" @:: t @-> size_t @-> returning (ptr uint8_t)
+      ;;
+
+      let pop = "grpc_slice_buffer_pop" @:: t @-> returning void
+      let reset_and_unref = "grpc_slice_buffer_reset_and_unref" @:: t @-> returning void
+      let swap = "grpc_slice_buffer_swap" @:: t @-> t @-> returning void
+      let move_into = "grpc_slice_buffer_move_into" @:: t @-> t @-> returning void
+
+      let trim_end =
+        "grpc_slice_buffer_trim_end" @:: t @-> size_t @-> t @-> returning void
+      ;;
+
+      let move_first =
+        "grpc_slice_buffer_move_first" @:: t @-> size_t @-> t @-> returning void
+      ;;
+
+      let move_first_no_ref =
+        "grpc_slice_buffer_move_first_no_ref" @:: t @-> size_t @-> t @-> returning void
+      ;;
+
+      let move_first_into_buffer =
+        "grpc_slice_buffer_move_first_into_buffer"
+        @:: t
+        @-> size_t
+        @-> ptr void
+        @-> returning void
+      ;;
+
+      let take_first = "grpc_slice_buffer_take_first" @:: t @-> returning u
+
+      let undo_take_first =
+        "grpc_slice_buffer_undo_take_first" @:: t @-> u @-> returning void
+      ;;
+    end
+  end
+
+  module Byte_buffer = struct
+    open struct
+      module M = T.Byte_buffer
+
+      let t = ptr M.t
+    end
+
+    let create_raw =
+      "grpc_raw_byte_buffer_create" @:: ptr T.Slice.t @-> size_t @-> returning t
+    ;;
+
+    let create_raw_compressed =
+      "grpc_raw_compressed_byte_buffer_create"
+      @:: ptr T.Slice.t
+      @-> size_t
+      @-> T.Compression.Algorithm.t
+      @-> returning t
+    ;;
+
+    let copy = "grpc_byte_buffer_copy" @:: t @-> returning t
+    let length = "grpc_byte_buffer_length" @:: t @-> returning size_t
+    let destroy = "grpc_byte_buffer_destroy" @:: t @-> returning void
+
+    let raw_from_reader =
+      "grpc_raw_byte_buffer_from_reader" @:: ptr M.Reader.t @-> returning t
+    ;;
+
+    module Reader = struct
+      open struct
+        module M = T.Byte_buffer.Reader
+
+        let u = t
+        let t = ptr M.t
+      end
+
+      let init = "grpc_byte_buffer_reader_init" @:: t @-> u @-> returning int
+      let destroy = "grpc_byte_buffer_reader_destroy" @:: t @-> returning void
+      let next = "grpc_byte_buffer_reader_next" @:: t @-> ptr T.Slice.t @-> returning int
+
+      let peek =
+        "grpc_byte_buffer_reader_peek" @:: t @-> ptr (ptr T.Slice.t) @-> returning int
+      ;;
+
+      let readall = "grpc_byte_buffer_reader_readall" @:: t @-> returning T.Slice.t
+    end
   end
 
   module Timespec = struct
@@ -500,7 +608,7 @@ module Functions (F : Ctypes.FOREIGN) = struct
       "gpr_time_from_millis" @:: int64_t @-> T.Clock_type.t @-> returning t
     ;;
 
-    let from_seconts =
+    let from_seconds =
       "gpr_time_from_seconds" @:: int64_t @-> T.Clock_type.t @-> returning t
     ;;
 
@@ -513,5 +621,88 @@ module Functions (F : Ctypes.FOREIGN) = struct
     let similar = "gpr_time_similar" @:: t @-> t @-> t @-> returning int
     let until = "gpr_sleep_until" @:: t @-> returning void
     let to_micros = "gpr_timespec_to_micros" @:: t @-> returning double
+  end
+
+  module Log = struct
+    open struct
+      module M = T.Log
+    end
+
+    let init = "gpr_log_verbosity_init" @:: void @-> returning void
+    let should_log = "gpr_should_log" @:: M.Severity.t @-> returning int
+    let set_log_level = "gpr_set_log_verbosity" @:: M.Severity.t @-> returning void
+
+    let string_of_severity =
+      "gpr_log_severity_string" @:: M.Severity.t @-> returning string
+    ;;
+
+    let set_log_func = "gpr_set_log_function" @:: M.log_func @-> returning void
+  end
+
+  module Alloc = struct
+    let malloc = "gpr_malloc" @:: size_t @-> returning (ptr void)
+    let zalloc = "gpr_zalloc" @:: size_t @-> returning (ptr void)
+    let free = "gpr_free" @:: ptr void @-> returning void
+    let realloc = "gpr_realloc" @:: ptr void @-> size_t @-> returning (ptr void)
+
+    let malloc_aligned =
+      "gpr_malloc_aligned" @:: size_t @-> size_t @-> returning (ptr void)
+    ;;
+
+    let free_aligned = "gpr_free_aligned" @:: ptr void @-> returning void
+  end
+
+  module Cv = struct
+    open struct
+      module M = T.Sync
+
+      let t = M.Cv.t
+    end
+
+    let broadcast = "gpr_cv_broadcast" @:: t @-> returning void
+    let destroy = "gpr_cv_destroy" @:: t @-> returning void
+    let init = "gpr_cv_init" @:: t @-> returning void
+    let signal = "gpr_cv_signal" @:: t @-> returning void
+    let wait = "gpr_cv_wait" @:: t @-> M.Mu.t @-> T.Timespec.t @-> returning int
+  end
+
+  module Event = struct
+    open struct
+      module M = T.Gpr_event
+
+      let t = ptr M.t
+    end
+
+    let get = "gpr_event_get" @:: t @-> returning (ptr void)
+    let init = "gpr_event_init" @:: t @-> returning void
+    let set = "gpr_event_set" @:: t @-> ptr void @-> returning void
+    let wait = "gpr_event_wait" @:: t @-> T.Timespec.t @-> returning (ptr void)
+  end
+
+  module Mu = struct
+    open struct
+      let t = T.Sync.Mu.t
+    end
+
+    let destroy = "gpr_mu_destroy" @:: t @-> returning void
+    let init = "gpr_mu_init" @:: t @-> returning void
+    let lock = "gpr_mu_lock" @:: t @-> returning void
+    let trylock = "gpr_mu_trylock" @:: t @-> returning int
+    let unlock = "gpr_mu_unlock" @:: t @-> returning void
+  end
+
+  module Once = struct
+    open struct
+      module M = T.Sync
+
+      let t = M.Once.t
+    end
+
+    let init =
+      "gpr_once_init"
+      @:: t
+      @-> Ctypes.(static_funptr @@ void @-> returning void)
+      @-> returning void
+    ;;
   end
 end

@@ -5,6 +5,7 @@ depends: [
   "ocaml"
   "core"
   "ctypes"
+  "ctypes-foreign"
   "core_unix"
   "lwt"
   "hmap"

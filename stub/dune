@@ -1,15 +1,27 @@
 (library
  (name stub)
- (libraries core ctypes lwt.unix)
- (modules :standard \ test playground)
+ (public_name grpc.stub)
+ (libraries ctypes ctypes.foreign lwt.unix)
+ (preprocess
+  (pps ppx_deriving.std))
+ (modules :standard \ test)
  (flags
   (:standard -w -9-27))
  (ctypes
   (external_library_name grpc)
   (headers
-   (include "grpc/grpc.h" "grpc/census.h" "grpc/grpc_security.h" "grpc/slice.h"
-            "grpc/support/time.h"
-            ))
+   (include
+    "grpc/grpc.h"
+    "grpc/grpc_security.h"
+    ; "grpc/census.h"
+    "grpc/slice.h"
+    ; "grpc/slice_buffer.h"
+    "grpc/byte_buffer_reader.h"
+    ; "grpc/support/time.h"
+    "grpc/support/log.h"
+    "grpc/support/alloc.h"
+    "grpc/support/sync.h"
+    "grpc/impl/codegen/sync_generic.h"))
   (type_description
    (instance Type)
    (functor Type_description))
@@ -20,12 +32,7 @@
   (generated_types Types_generated)
   (generated_entry_point C)))
 
-(executable
-  (name playground)
-  (modules playground)
-  (libraries stub inspect ctypes))
-
 (test
-  (name test)
-  (modules test)
-  (libraries stub ctypes alcotest))
+ (name test)
+ (modules test)
+ (libraries stub ctypes alcotest))
