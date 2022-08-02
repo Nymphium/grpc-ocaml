@@ -7,11 +7,13 @@ end
 (** assoc list as key-value metadata array *)
 type fwd = (string * string) list
 
+let init arr = u @@ F.Metadata.init (Ctypes.addr arr)
+
 (** allocate object with capacity = size *)
 let allocate ?(size = 0) () =
   let finalise a = Lwt.async @@ fun () -> u @@ F.Metadata.destroy (Ctypes.addr a) in
   let t = Ctypes.make ~finalise T.Metadata.Array.t in
-  let*? () = F.Metadata.init @@ Ctypes.addr t in
+  let%lwt () = init t in
   let size = Unsigned.Size_t.of_int size in
   t @. M.Array.capacity <-@ size;
   t @. M.Array.count <-@ Unsigned.Size_t.zero;
@@ -46,21 +48,18 @@ let make fwd =
 ;;
 
 let to_fwd md =
-  let size = Unsigned.Size_t.to_int @@ deref @@ md @. T.Metadata.Array.count in
-  let%lwt () = Lwt_io.printlf "size: %d" size in
-  let md' =
-    CArray.(to_list @@ Fun.flip from_ptr size @@ deref @@ md @. T.Metadata.Array.metadata)
-  in
+  let size = Unsigned.Size_t.to_int @@ md @.* T.Metadata.Array.count in
+  let md' = CArray.(to_list @@ flip from_ptr size @@ md @.* T.Metadata.Array.metadata) in
   Lwt.all
-  @@ Fun.flip List.map md'
+  @@ flip List.map md'
   @@ fun md ->
-  let%lwt k = Slice.to_ocaml_string @@ deref @@ md @. T.Metadata.key in
-  let%lwt v = Slice.to_ocaml_string @@ deref @@ md @. T.Metadata.value in
+  let%lwt k = Slice.to_ocaml_string @@ md @.* T.Metadata.key in
+  let%lwt v = Slice.to_ocaml_string @@ md @.* T.Metadata.value in
   Lwt.return (k, v)
 ;;
 
 let inspect' t =
-  let%lwt k = Slice.raw_bytes @@ deref @@ t @. M.key in
-  let%lwt v = Slice.raw_bytes @@ deref @@ t @. M.value in
+  let%lwt k = Slice.raw_bytes @@ t @.* M.key in
+  let%lwt v = Slice.raw_bytes @@ t @.* M.value in
   Lwt.return @@ Printf.sprintf {|{ key: "%s"; value: "%s" }|} k v
 ;;

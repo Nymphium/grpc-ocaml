@@ -14,7 +14,7 @@ let pluck cq timeout tag =
   let rec go () =
     let%lwt deadline = add () in
     let*? ev = F.Completion_queue.pluck cq tag deadline __reserved__ in
-    let is_not_timeout = deref @@ ev @. T.Event.typ <> T.Completion.Type.QUEUE_TIMEOUT in
+    let is_not_timeout = ev @.* T.Event.typ <> T.Completion.Type.QUEUE_TIMEOUT in
     let%lwt is_deadline = Timespec.cmp deadline timeout >|= ( < ) 0 in
     if is_not_timeout || is_deadline then Lwt.return ev else go ()
   in

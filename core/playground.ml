@@ -1,5 +1,9 @@
 (* open Stub *)
 
+let string_of_md tr =
+  List.map (fun (k, v) -> Printf.sprintf "{%s: %s}" k v) tr |> String.concat ", "
+;;
+
 (*let () =*)
 (*Lwt_main.run*)
 (*@@*)
@@ -137,25 +141,18 @@ let () =
     Grpc_core.Call.request ~metadata:[ "x-md-msg", "hoge" ] ~message:"hello" call
   in
   let* () =
+    let recv_message = Option.value ~default:"" recv_message in
     let status = Stub.T.Status_code.show status in
     let error = Option.value ~default:"" error in
     let details = Option.value ~default:"" details in
-    let tr =
-      List.map (fun (k, v) -> Printf.sprintf "{%s: %s}" k v) tr |> String.concat ", "
-    in
+    let tr = string_of_md (tr @ metadata) in
     Lwt_io.printlf
-      "{ status: %s; error: %s; details: %s; tr: %s }"
+      {|{ recv_message: "%s"; status: %s; error: "%s"; details: "%s"; tr: [%s] }|}
+      recv_message
       status
       error
       details
       tr
-  in
-  let () =
-    Inspect.Sexpr.dump recv_message;
-    (* Inspect.Sexpr.dump recv_status_on_client; *)
-    Inspect.Sexpr.dump metadata;
-    (* Inspect.Sexpr.dump t; *)
-    flush stdout
   in
   Lwt.return_unit
 ;;

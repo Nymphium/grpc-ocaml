@@ -56,90 +56,53 @@ let update_status_from_server op status =
   Lwt.return_unit
 ;;
 
-(* let finalise op = *)
-(* let data = getf op M.data in *)
-
 let make (fwd : fwd) =
   let op = Ctypes.make M.t in
+  let data = op @.* M.data in
+  op @. M.reserved <-@ __reserved__;
   op @. M.op <-@ to_op_type fwd;
   op @. M.flags <-@ Unsigned.UInt32.zero;
   match fwd with
-  | `Send_initial_metadata [] -> Lwt.return op
+  | `Send_close_from_client | `Send_initial_metadata [] -> Lwt.return op
   | `Send_initial_metadata md ->
     let%lwt md' = flip getf T.Metadata.Array.metadata =|< Metadata.make md in
-    let data =
-      let it = Ctypes.make D.t in
-      let send_initial_metadata =
-        let it = Ctypes.make D.Send_initial_metadata.t in
-        let size = List.length md |> Unsigned.Size_t.of_int in
-        it @. D.Send_initial_metadata.metadata <-@ md';
-        it @. D.Send_initial_metadata.metadata <-@ md';
-        it @. D.Send_initial_metadata.count <-@ size;
-        it
-      in
-      it @. D.send_initial_metadata <-@ send_initial_metadata;
-      it
-    in
-    op @. M.data <-@ data;
+    let it = data @.* D.send_initial_metadata in
+    let size = List.length md |> Unsigned.Size_t.of_int in
+    it @. D.Send_initial_metadata.metadata <-@ md';
+    it @. D.Send_initial_metadata.metadata <-@ md';
+    it @. D.Send_initial_metadata.count <-@ size;
     Lwt.return op
   | `Send_message msg ->
     let%lwt msg' = Byte_buffer.from_string msg in
-    let data =
-      let it = Ctypes.make D.t in
-      let send_message =
-        let it = Ctypes.make D.Send_message.t in
-        it @. D.Send_message.send_message <-@ msg';
-        it
-      in
-      it @. D.send_message <-@ send_message;
-      it
-    in
-    op @. M.data <-@ data;
+    let it = data @.* D.send_message in
+    it @. D.Send_message.send_message <-@ msg';
     Lwt.return op
   | `Send_status_from_server st ->
     let%lwt () = update_status_from_server op st in
     Lwt.return op
   | `Recv_initial_metadata ->
     let%lwt md = Ctypes.addr =|< Metadata.allocate () in
-    let data =
-      let it = Ctypes.make D.t in
-      let recv_initial_metadata = Ctypes.make D.Recv_initial_metadata.t in
-      recv_initial_metadata @. D.Recv_initial_metadata.recv_initial_metadata <-@ md;
-      it @. D.recv_initial_metadata <-@ recv_initial_metadata;
-      it
-    in
-    op @. M.data <-@ data;
-    Lwt.return op
-  | `Send_close_from_client ->
-    let data = Ctypes.make D.t in
-    op @. M.data <-@ data;
+    let it = data @.* D.recv_initial_metadata in
+    it @. D.Recv_initial_metadata.recv_initial_metadata <-@ md;
     Lwt.return op
   | `Recv_message ->
-    let data = Ctypes.make D.t in
-    let it = Ctypes.make D.Recv_message.t in
+    let it = data @.* D.recv_message in
     let msg = Byte_buffer.allocate () in
     it @. D.Recv_message.recv_message <-@ msg;
-    data @. D.recv_message <-@ it;
-    op @. M.data <-@ data;
     Lwt.return op
   | `Recv_status_on_client ->
-    let data = Ctypes.make D.t in
-    let it = Ctypes.make D.Recv_status_on_client.t in
+    let it = data @.* D.recv_status_on_client in
     let%lwt slice = Ctypes.addr =|< Slice.allocate ~size:10 () in
     let%lwt md = Ctypes.addr =|< Metadata.allocate () in
     let status = Status.allocate () in
     it @. D.Recv_status_on_client.trailing_metadata <-@ md;
     it @. D.Recv_status_on_client.status <-@ status;
     it @. D.Recv_status_on_client.status_details <-@ Some slice;
-    it @. D.Recv_status_on_client.error_string <-@ None;
-    data @. D.recv_status_on_client <-@ it;
-    op @. M.data <-@ data;
     Lwt.return op
   | `Recv_close_on_server ->
-    let data = Ctypes.make D.t in
-    let it = Ctypes.make D.Recv_close_on_server.t in
-    data @. D.recv_close_on_server <-@ it;
-    op @. M.data <-@ data;
+    let it = data @.* D.recv_close_on_server in
+    let cancelled = Ctypes.(allocate_n int ~count:1) in
+    it @. D.Recv_close_on_server.cancelled <-@ cancelled;
     Lwt.return op
 ;;
 
