@@ -615,20 +615,20 @@ module Types (F : Ctypes.TYPE) = struct
       module Attributes = Abs ()
       module Factory = Abs ()
 
-      module Functor = struct
-        include Struct (struct
-          let name = "grpc_completion_queue_functor"
-        end)
+      (* module Functor = struct *)
+      (* include Struct (struct *)
+      (* let name = "grpc_completion_queue_functor" *)
+      (* end) *)
 
-        let functor_run =
-          "functor_run" <-. static_funptr @@ ptr t @-> int @-> returning void
-        ;;
+      (* let functor_run = *)
+      (* "functor_run" <-. static_funptr @@ ptr t @-> int @-> returning void *)
+      (* ;; *)
 
-        let inlineable = "inlineable" <-. int
-        let internal_success = "internal_success" <-. int
-        let internal_next = "internal_next" <-. ptr t
-        let () = seal t
-      end
+      (* let inlineable = "inlineable" <-. int *)
+      (* let internal_success = "internal_success" <-. int *)
+      (* let internal_next = "internal_next" <-. ptr t *)
+      (* let () = seal t *)
+      (* end *)
 
       module Type = Abs ()
     end
@@ -937,15 +937,15 @@ module Types (F : Ctypes.TYPE) = struct
     ;;
   end
 
-  module Serving_status_update = struct
-    include Anon_struct (struct
-      let name = "grpc_serving_status_update"
-    end)
+  (* module Serving_status_update = struct *)
+  (* include Anon_struct (struct *)
+  (* let name = "grpc_serving_status_update" *)
+  (* end) *)
 
-    let error_message = "error_message" <-. string
-    let code = "code" <-. Status_code.t
-    let () = seal t
-  end
+  (* let error_message = "error_message" <-. string *)
+  (* let code = "code" <-. Status_code.t *)
+  (* let () = seal t *)
+  (* end *)
 
   module Census_context = Abs ()
   module Resource_quota = Abs ()
@@ -975,26 +975,26 @@ module Types (F : Ctypes.TYPE) = struct
     module Config_fetcher = Abs ()
     module Credentials = Abs ()
 
-    module Xds_status_notifier = struct
-      include Anon_struct (struct
-        let name = "grpc_server_xds_status_notifier"
-      end)
+    (* module Xds_status_notifier = struct *)
+    (* include Anon_struct (struct *)
+    (* let name = "grpc_server_xds_status_notifier" *)
+    (* end) *)
 
-      let user_data = "user_data" <-. ptr void
+    (* let user_data = "user_data" <-. ptr void *)
 
-      let on_serving_status_update =
-        "on_serving_status_update"
-        <-. static_funptr
-            @@ ptr void
-            @-> string
-            (* XXX: should be "Serving_status_update.t" *)
-            (* @-> Serving_status_update.t *)
-            @-> ptr void
-            @-> returning void
-      ;;
+    (* let on_serving_status_update = *)
+    (* "on_serving_status_update" *)
+    (* <-. static_funptr *)
+    (* @@ ptr void *)
+    (* @-> string *)
+    (* (* XXX: should be "Serving_status_update.t" *) *)
+    (* (* @-> Serving_status_update.t *) *)
+    (* @-> ptr void *)
+    (* @-> returning void *)
+    (* ;; *)
 
-      let () = seal t
-    end
+    (* let () = seal t *)
+    (* end *)
   end
 
   module Propagation_bits = struct

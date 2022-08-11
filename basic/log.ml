@@ -7,7 +7,6 @@ module Tag = struct
   ;;
 
   let upstream_header = Logs.Tag.(def "upstream_header" Headers.pp |> add)
-  let uri = Logs.Tag.(def "uri" Uri.pp_hum |> add)
   let downstream_body = Logs.Tag.(def "downstream_body" ppf_str |> add)
   let downstream_header = Logs.Tag.(def "downstream_header" Headers.pp |> add)
   let empty = Logs.Tag.empty

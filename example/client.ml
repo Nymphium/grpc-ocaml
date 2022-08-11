@@ -1,9 +1,13 @@
 module EchoService = Proto.Grpc_test.Echo
 
-let send_greet host port =
-  let client = Grpc_client.make ~host ~port () in
+let client =
+  let open Settings in
+  Grpc_client.make ~host ~port ()
+;;
+
+let send_greet client =
   let req = EchoService.Greet.Request.make ~message:"hello" () in
-  client.unary EchoService.greet' req
+  client.Grpc_client.unary EchoService.greet' req
 ;;
 
 let () =
@@ -12,8 +16,8 @@ let () =
   Lwt_main.run
   @@
   let open Lwt.Syntax in
-  let* _res = send_greet host port in
-  let* res = send_greet host port in
+  let* _res = send_greet client in
+  let* res = send_greet client in
   match res with
   | Ok (msg, _) ->
     Logs.debug (fun m -> m "response: %s" msg);

@@ -45,8 +45,8 @@ let () =
           (* @@ fun () -> ignore @@ Ctypes.make Completion.Queue.Attributes.t) *)
           (* ; (test_case "completion_queue_factory" `Quick *)
           (* @@ fun () -> ignore @@ Ctypes.make Completion.Queue.Factory.t) *)
-        ; (test_case "completion_queue_functor" `Quick
-          @@ fun () -> ignore @@ Ctypes.make Completion.Queue.Functor.t)
+          (* ; (test_case "completion_queue_functor" `Quick *)
+          (* @@ fun () -> ignore @@ Ctypes.make Completion.Queue.Functor.t) *)
           (* ; (test_case "completion_queue_type" `Quick *)
           (* @@ fun () -> ignore @@ Ctypes.make Completion.Queue.Type.t) *)
         ; (test_case "event" `Quick @@ fun () -> ignore @@ Ctypes.make Event.t)
@@ -55,8 +55,8 @@ let () =
           (* @@ fun () -> ignore @@ Ctypes.make Socket.Factorty.t) *)
           (* ; (test_case "socket_mutator" `Quick *)
           (* @@ fun () -> ignore @@ Ctypes.make Socket.Mutator.t) *)
-        ; (test_case "serving_status_update" `Quick
-          @@ fun () -> ignore @@ Ctypes.make Serving_status_update.t)
+          (* ; (test_case "serving_status_update" `Quick *)
+          (* @@ fun () -> ignore @@ Ctypes.make Serving_status_update.t) *)
           (* ; (test_case "census_context" `Quick *)
           (* @@ fun () -> ignore @@ Ctypes.make Census_context.t) *)
           (* ; (test_case "resource_quota" `Quick *)
@@ -66,8 +66,8 @@ let () =
           (* @@ fun () -> ignore @@ Ctypes.make Server.Credentials.t) *)
           (* ; (test_case "server_config_fetcher" `Quick *)
           (* @@ fun () -> ignore @@ Ctypes.make Server.Config_fetcher.t) *)
-        ; (test_case "server_xds_status_notifier" `Quick
-          @@ fun () -> ignore @@ Ctypes.make Server.Xds_status_notifier.t)
+          (* ; (test_case "server_xds_status_notifier" `Quick *)
+          (* @@ fun () -> ignore @@ Ctypes.make Server.Xds_status_notifier.t) *)
         ] )
     ]
 ;;

@@ -134,12 +134,12 @@ module Functions (F : Ctypes.FOREIGN) = struct
         @-> returning void
       ;;
 
-      let xds_create =
-        foreign "grpc_server_config_fetcher_xds_create"
-        @@ T.Server.Xds_status_notifier.t
-        @-> ptr T.Channel.Arg.t
-        @-> returning T.Server.Config_fetcher.t
-      ;;
+      (* let xds_create = *)
+      (* foreign "grpc_server_config_fetcher_xds_create" *)
+      (* @@ T.Server.Xds_status_notifier.t *)
+      (* @-> ptr T.Channel.Arg.t *)
+      (* @-> returning T.Server.Config_fetcher.t *)
+      (* ;; *)
     end
 
     module Credentials = struct
@@ -331,12 +331,12 @@ module Functions (F : Ctypes.FOREIGN) = struct
       @-> returning t
     ;;
 
-    let create_for_callback =
-      foreign "grpc_completion_queue_create_for_callback"
-      @@ ptr T.Completion.Queue.Functor.t
-      @-> ptr void
-      @-> returning t
-    ;;
+    (* let create_for_callback = *)
+    (* foreign "grpc_completion_queue_create_for_callback" *)
+    (* @@ ptr T.Completion.Queue.Functor.t *)
+    (* @-> ptr void *)
+    (* @-> returning t *)
+    (* ;; *)
 
     let create_for_next =
       "grpc_completion_queue_create_for_next" @:: ptr void @-> returning t
@@ -386,7 +386,7 @@ module Functions (F : Ctypes.FOREIGN) = struct
     end
   end
 
-  let dump_xds_configs = "grpc_dump_xds_configs" @:: void @-> returning T.Slice.t
+  (* let dump_xds_configs = "grpc_dump_xds_configs" @:: void @-> returning T.Slice.t *)
 
   module Header = struct
     let key_is_legal = "grpc_header_key_is_legal" @:: T.Slice.t @-> returning int
@@ -570,9 +570,9 @@ module Functions (F : Ctypes.FOREIGN) = struct
       let destroy = "grpc_byte_buffer_reader_destroy" @:: t @-> returning void
       let next = "grpc_byte_buffer_reader_next" @:: t @-> ptr T.Slice.t @-> returning int
 
-      let peek =
-        "grpc_byte_buffer_reader_peek" @:: t @-> ptr (ptr T.Slice.t) @-> returning int
-      ;;
+      (* let peek = *)
+      (* "grpc_byte_buffer_reader_peek" @:: t @-> ptr (ptr T.Slice.t) @-> returning int *)
+      (* ;; *)
 
       let readall = "grpc_byte_buffer_reader_readall" @:: t @-> returning T.Slice.t
     end

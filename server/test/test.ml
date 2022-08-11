@@ -9,14 +9,14 @@ let handler =
     @@ fun ctx _headers message ->
     let request_id = Grpc_server.Context.get Ctx.request_id ctx in
     print_endline request_id;
-    ok message)
+    return message)
 ;;
 
 let middlewares =
   let open Grpc_server in
   let open Middlewares in
   empty
-  |> add (fun ctx headers _data ->
+  |> add (fun ctx _data headers ->
          let request_id =
            List.assoc_opt "request-id" headers
            |> (function

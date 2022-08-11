@@ -19,12 +19,29 @@ type ('req, 'res) unary =
   -> Grpc_core.Server.t
   -> Grpc_core.Server.t
 
-let ok ?(metadata = []) res = Lwt_result.return (res, metadata)
+(** make success response  *)
+let ok ?(metadata = []) res : 'a Grpc_core.Protoiso.res = Result.return (res, metadata)
+
+(** composition of [ok] and [Lwt.return] *)
+let return ?metadata res = Lwt.return @@ ok ?metadata res
+
+(** make error response *)
+let fail ?(status = `INTERNAL) ?(metadata = []) ?detail () : 'a Grpc_core.Protoiso.res =
+  Result.fail (status, detail, metadata)
+;;
+
+(** composition of [fail] and [Lwt.return] *)
+let fail' ?status ?metadata ?detail () = Lwt.return @@ fail ?status ?metadata ?detail ()
 
 (** Unary rpc handler *)
 module Unary = struct
   (** adds unary handler:
-      adds `host` and `target` to its context, and logs `target` and duration of execution time *)
+      adds `host` and `target` to its context, and logs `target` and duration of execution time when handling
+{
+Unary.add rpc @@ fun ctx req md ->
+  let%lwt () = Lwt_io.printl (Context.get_host ctx) in (* prints the host of client *)
+  ......
+} *)
   let add : type req res. (req, res) unary =
    fun rpc ->
     let module R = (val rpc) in

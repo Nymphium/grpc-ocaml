@@ -1,28 +1,8 @@
 (library
  (name grpc_core)
  (public_name grpc.core)
- (modules :standard \ play_client play_server proto)
  (libraries grpc.stub hmap lwt lwt.unix)
  (inline_tests)
  (preprocess
   (staged_pps ppx_deriving.std lwt_ppx ppx_inline_test)))
 
-(executable
- (name play_client)
- (modules play_client)
- (libraries inspect grpc.core lwt.unix))
-
-(executable
- (name play_server)
- (modules play_server proto)
- (libraries ocaml-protoc-plugin grpc.core lwt.unix))
-
-(copy_files
- (files ../test/proto.proto))
-
-(rule
- (target proto.ml)
- (deps
-  (:proto proto.proto))
- (action
-  (bash "protoc --ocaml_out=. -I . %{proto}")))

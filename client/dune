@@ -5,7 +5,6 @@
   grpc.core
   grpc.basic
   core
-  uri
   lwt.unix
   logs.lwt
   ocaml-protoc-plugin)

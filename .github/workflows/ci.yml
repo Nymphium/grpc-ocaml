@@ -22,6 +22,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: Update OS packages
+        run: |
+          if [ "${{ matrix.os }}" = "ubuntu-latest" ] ; then
+            sudo apt update && sudo apt upgrade
+          else
+            brew update
+          fi
+
       - name: Setup OCaml ${{ matrix.ocaml-version }}
         uses: ocaml/setup-ocaml@v2
         with:
@@ -38,9 +46,9 @@ jobs:
           else
             brew install protobuf grpcurl yarn
           fi
-          
+
           opam pin add ocaml-protoc-plugin https://github.com/Nymphium/ocaml-protoc-plugin.git#create-rpc-path
-          opam install . --deps-only --with-doc --verbose
+          opam install . --deps-only --with-test --verbose
 
       - name: Run tests
         run: opam exec -- dune runtest

@@ -16,7 +16,7 @@ let server host port =
     let open Grpc_server in
     let open Middlewares in
     empty
-    |> add (fun ctx headers _ ->
+    |> add (fun ctx _ headers ->
            let request_id =
              Headers.get "request-id" headers
              |> (function
@@ -33,7 +33,7 @@ let server host port =
       @@ fun ctx _ message ->
       let request_id = Grpc_server.Context.get Ctx.request_id ctx in
       print_endline request_id;
-      ok message)
+      return message)
   in
   Grpc_server.establish ~host ~port ~middlewares handlers
 ;;

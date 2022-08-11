@@ -1,31 +1,35 @@
 opam-version: "2.0"
+synopsis: "gRPC for OCaml"
+maintainer: "Satoru Kawahara <s1311350@gmail.com>"
+authors: ["Satoru Kawahara <s1311350@gmail.com>"]
+license: "MIT"
 version: "0.0.0"
+homepage: "https://github.com/Nymphium/grpc-ocaml"
+bug-reports: "https://github.com/Nymphium/grpc-ocaml/issues"
+dev-repo: "git+https://github.com/Nymphium/grpc-ocaml.git"
 depends: [
-  "dune" {< "3.2"}
-  "ocaml"
+  "dune" {< "3.2"} # just for test, to avoid this bug https://github.com/ocaml/dune/issues/5945
   "core"
   "ctypes"
   "ctypes-foreign"
-  "core_unix"
   "lwt"
   "hmap"
   "logs"
-  "uri"
-  "h2-lwt-unix"
   "ocaml-protoc-plugin"
-  "conf-protoc" { with-test }
-  "lwt_ssl"
   "lwt_ppx"
   "ppx_deriving"
   "ppx_yojson_conv"
   "ppx_let"
+  "odoc" { with-doc }
   "ppx_inline_test" { with-test }
   "alcotest" { with-test }
 ]
 
 depexts: [
   ["grpc"] { os-distribution = "nix" }
+  ["grpc"] { os = "macos" & os-distribution = "homebrew" }
   ["libgrpc-dev"] { os-family = "debian" }
+  ["openssl"] { os-distribution = "nix" } # TODO: WHY THIS PACKAGE NEEDED
 ]
 
 build: ["dune" "build" "--profile" "release" "-j" jobs "-p" name]

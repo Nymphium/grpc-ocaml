@@ -72,16 +72,16 @@ empty |> add @@ fun ctx headers raw_data ->
   ctx'
 |} *)
 module Middlewares = struct
-  type t = Context.t -> Metadata.bwd -> string option -> Context.t
+  type t = Context.t -> string option -> Metadata.bwd -> Context.t
 
   let empty : t = fun c _ _ -> c
 
   (** add middleware: read context, headers and raw data, and inspect context
    *)
   let add : t -> t -> t =
-   fun newm m ctx md data ->
-    let ctx' = m ctx md data in
-    newm ctx' md data
+   fun newm m ctx data md ->
+    let ctx' = m ctx data md in
+    newm ctx' data md
  ;;
 end
 
@@ -233,7 +233,7 @@ let dispatch t Rpc.{ methd; host; metadata; call; deadline; _ } =
     let%lwt req, md = Call.remote_read call (is_null metadata) in
     let metadata = Metadata.to_bwd metadata in
     let context =
-      t.middlewares t.context md req
+      t.middlewares t.context req md
       |> Context.(add target methd)
       |> Context.(add host) host
     in
