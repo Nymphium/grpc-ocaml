@@ -4,51 +4,73 @@ on:
   [pull_request, push]
 
 jobs:
-  build:
-    name: Build
-    strategy:
-      fail-fast: false
-      matrix:
-        os: 
-          - ubuntu-latest
-          # Pending due to OCaml libraries installation error 
-          # - macos-latest
-        ocaml-version:
-          - 4.13.1
-          - 4.14.0
-    runs-on: ${{ matrix.os }}
+  # temporarily stop using usual ubuntu to test due to old libgrpc version
+  
+  # ci:
+    # strategy:
+      # fail-fast: false
+      # matrix:
+        # os: 
+          # - ubuntu-latest
+          # # Pending due to OCaml libraries installation error 
+          # # - macos-latest
+        # ocaml-version:
+          # - 4.13.1
+          # - 4.14.0
+    # runs-on: ${{ matrix.os }}
+
+    # steps:
+      # - name: Checkout code
+        # uses: actions/checkout@v2
+
+      # - name: Update OS packages
+        # run: |
+          # if [ "${{ matrix.os }}" = "ubuntu-latest" ] ; then
+            # sudo apt update && sudo apt upgrade
+          # else
+            # brew update
+          # fi
+
+      # - name: Setup OCaml ${{ matrix.ocaml-version }}
+        # uses: ocaml/setup-ocaml@v2
+        # with:
+          # ocaml-compiler: ${{ matrix.ocaml-version }}
+          # dune-cache: ${{ matrix.os != 'macos-latest' }}
+
+      # - name: Install dependencies
+        # run: |
+          # if [ "${{ matrix.os }}" = "ubuntu-latest" ] ; then
+            # sudo apt-get install -y protobuf-compiler yarn
+            # curl -sLO https://github.com/fullstorydev/grpcurl/releases/download/v1.8.6/grpcurl_1.8.6_linux_x86_64.tar.gz
+            # tar -xvf grpcurl_1.8.6_linux_x86_64.tar.gz
+            # sudo cp grpcurl /usr/local/bin
+          # else
+            # brew install protobuf grpcurl yarn
+          # fi
+
+          # opam pin add ocaml-protoc-plugin https://github.com/Nymphium/ocaml-protoc-plugin.git#create-rpc-path
+          # opam install . --deps-only --with-test --verbose
+
+      # - name: Run tests
+        # run: opam exec -- dune runtest
+
+  ci-nix:
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Update OS packages
-        run: |
-          if [ "${{ matrix.os }}" = "ubuntu-latest" ] ; then
-            sudo apt update && sudo apt upgrade
-          else
-            brew update
-          fi
-
-      - name: Setup OCaml ${{ matrix.ocaml-version }}
-        uses: ocaml/setup-ocaml@v2
+      - uses: cachix/install-nix-action@v15
         with:
-          ocaml-compiler: ${{ matrix.ocaml-version }}
-          dune-cache: ${{ matrix.os != 'macos-latest' }}
+          extra_nix_config: |
+            max-jobs = auto
+            cores = 0
 
-      - name: Install dependencies
-        run: |
-          if [ "${{ matrix.os }}" = "ubuntu-latest" ] ; then
-            sudo apt-get install -y protobuf-compiler yarn
-            curl -sLO https://github.com/fullstorydev/grpcurl/releases/download/v1.8.6/grpcurl_1.8.6_linux_x86_64.tar.gz
-            tar -xvf grpcurl_1.8.6_linux_x86_64.tar.gz
-            sudo cp grpcurl /usr/local/bin
-          else
-            brew install protobuf grpcurl yarn
-          fi
-
-          opam pin add ocaml-protoc-plugin https://github.com/Nymphium/ocaml-protoc-plugin.git#create-rpc-path
-          opam install . --deps-only --with-test --verbose
+      - uses: cachix/cachix-action@v10
+        with:
+          name: nymphium-grpc-ocaml
+          authToken: '${{ secrets.CACHIX_SIGNING_KEY }}'
 
       - name: Run tests
-        run: opam exec -- dune runtest
+        run: nix-shell --run 'dune runtest'

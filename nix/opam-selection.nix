@@ -634,8 +634,8 @@ in
       opamInputs = 
       {
         inherit (selection) ppx_yojson_conv ppx_let ppx_deriving
-        ocaml-protoc-plugin lwt_ppx lwt logs hmap dune ctypes-foreign ctypes
-        core;
+        ocaml-protoc-plugin ocaml lwt_ppx lwt logs hmap dune ctypes-foreign
+        ctypes core;
       };
       opamSrc = "grpc.opam";
       buildInputs = [ (pkgs.grpc or null) (pkgs.libgrpc-dev or null)

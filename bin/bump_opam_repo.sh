@@ -5,8 +5,9 @@ set -eu
 unset OPAM_REPO_COMMIT
 nix-shell default.nix -A resolve
 
-sha=$(echo 'let selection = import ./nix/opam-selection.nix {}; in selection.repos.opam-repository.fetch.rev' | nix repl 2>/dev/null \
-  | awk '$0 != "" { gsub("\"", "", $1); gsub(/\x1b\[[0-9;]*m?/, "", $1); print $0 }')
+sha=$(nix eval --impure --expr \
+     '(import ./nix/opam-selection.nix {}).repos.opam-repository.fetch.rev' \
+    | sed -e 's/"//g')
 
 sed -i'' -e "s/\(OPAM_REPO_COMMIT=\).*/\1${sha}/" .envrc
 
