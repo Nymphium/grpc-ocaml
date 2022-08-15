@@ -1,12 +1,11 @@
 open Grpc_core
 open Grpc_basic
-open Core
-open Fn
+open Fun
 
 open struct
   module PB = Ocaml_protoc_plugin
 
-  let encode encoder = compose encoder PB.Reader.create
+  let encode encoder base = encoder @@ PB.Reader.create base
 end
 
 type t =
@@ -40,13 +39,13 @@ let make ~host ~port ?credentials ?(args = []) () =
     in
     let decoder, encoder = PB.Service.make_client_functions' rpc' in
     let set_request_id =
-      Option.value_map request_id ~default:id ~f:(fun id -> Headers.add "request_id" id)
+      Option.(value ~default:id @@ map (fun id -> Headers.add "request_id" id) request_id)
     in
     fun ?(metadata = []) req ->
       let metadata = Headers.(metadata |> Timeout.set_second timeout) |> set_request_id in
       let body = PB.Writer.contents @@ decoder req in
       let call = Call.make ~channel ~methd:path () in
-      Call.unary_request call ~metadata ~message:body
+      Lwt.return @@ Call.unary_request call ~metadata ~message:body
       |> flip Lwt_result.bind
          @@ fun (body, trailers) ->
          Lwt.return

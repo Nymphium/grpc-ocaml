@@ -1,7 +1,7 @@
 let () =
   let open Alcotest in
   run
-    "ffi"
+    "stub"
     [ ( "type"
       , let open Grpc_stub.Type in
         [ (test_case "slice" `Quick @@ fun () -> ignore @@ Ctypes.make Slice.t)

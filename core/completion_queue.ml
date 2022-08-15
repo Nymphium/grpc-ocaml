@@ -23,5 +23,5 @@ let pluck cq timeout tag =
     let is_deadline = Timespec.cmp deadline timeout > 0 in
     if is_not_timeout || is_deadline then ev else go ()
   in
-  Lwt_preemptive.detach go ()
+  go ()
 ;;

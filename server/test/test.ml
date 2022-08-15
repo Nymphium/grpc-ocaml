@@ -7,8 +7,9 @@ let handler =
   Grpc_server.Handler.(
     Unary.add EchoService.greet'
     @@ fun ctx _headers message ->
+    let open Syntax in
     let request_id = Grpc_server.Context.get Ctx.request_id ctx in
-    print_endline request_id;
+    let@ () = Logs_lwt.debug @@ fun m -> m "%s" request_id in
     return message)
 ;;
 
@@ -41,12 +42,13 @@ let () =
   Lwt_main.run
   @@
   let open Lwt.Syntax in
+  let server = Grpc_server.make_insecure ~host ~port ~middlewares handler in
   let () =
     Lwt.(
       async
       @@ fun () ->
-      print_endline "establish server...";
-      Grpc_server.establish ~host ~port ~middlewares handler)
+      let* () = Logs_lwt.debug @@ fun m -> m "establish server" in
+      Grpc_server.start_with_handle_shutdown server)
   in
   print_endline "send gRPC via grpcurl...";
   let* st = Lwt_process.exec cmd in

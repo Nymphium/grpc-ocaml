@@ -12,7 +12,7 @@ let
     let sources = import ./sources.nix {};
         src' = pkgs.nix-gitignore.gitignoreSource [ "*.nix" ] ../.;
     in
-    { inherit (sources) ocaml-protoc-plugin core_unix; }
+    { inherit (sources) ocaml-protoc-plugin; }
     // (builtins.listToAttrs
         (builtins.map (name: { inherit name; value = src'; }) localPackages) );
 
@@ -40,7 +40,7 @@ let
 
   resolve = opam2nix.resolve args (devPackages ++ localPackages ++ testPackages ++ [
     "${src.ocaml-protoc-plugin}/ocaml-protoc-plugin.opam"
-    (toString ./. + "/opam/core_unix.opam")
+    # (toString ./. + "/opam/core_unix.opam")
   ]);
 in
 {

@@ -1,6 +1,6 @@
 (library
  (name grpc_server)
  (public_name grpc.server)
- (libraries grpc.core grpc.basic core ocaml-protoc-plugin logs.lwt)
+ (libraries grpc.core grpc.basic ocaml-protoc-plugin logs.lwt)
  (preprocess
   (pps ppx_deriving.std lwt_ppx)))

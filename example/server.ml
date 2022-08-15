@@ -22,10 +22,11 @@ let server host port =
   in
   let handlers =
     Grpc_server.Handler.(
+      let open Syntax in
       Unary.add EchoService.greet'
       @@ fun ctx _ message ->
       let request_id = Grpc_server.Context.get Ctx.request_id ctx in
-      Logs.debug (fun m -> m "request-id: %s" request_id);
+      let@ () = Logs_lwt.debug (fun m -> m "request-id: %s" request_id) in
       return message)
   in
   Grpc_server.make_insecure ~host ~port ~middlewares handlers
@@ -33,17 +34,16 @@ let server host port =
 
 let () =
   let open Settings in
-  let server =
-    Logs.debug (fun m -> m "run gRPC echo server on %s:%d ..." host port);
-    server host port
-  in
+  let server = server host port in
   let exception Break in
-  let () = Lwt.async @@ fun () -> Grpc_server.start_with_handle_shutdown server in
-  let _ =
-    Lwt_unix.on_signal Sys.sigint (fun _ ->
-        print_endline "break";
-        raise Break)
+  let () =
+    Lwt.async
+    @@ fun () ->
+    let open Lwt.Syntax in
+    let* () = Logs_lwt.debug (fun m -> m "run gRPC echo server on %s:%d ..." host port) in
+    Grpc_server.start_with_handle_shutdown server
   in
+  let _ = Lwt_unix.on_signal Sys.sigint (fun _ -> raise Break) in
   let forever, _ = Lwt.wait () in
   try Lwt_main.run forever with
   | Break -> ()

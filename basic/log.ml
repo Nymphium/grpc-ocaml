@@ -6,8 +6,12 @@ module Tag = struct
     Logs.Tag.add tag
   ;;
 
+  let float ~name =
+    let tag = Logs.Tag.def name (Fun.flip Format.fprintf "%f") in
+    Logs.Tag.add tag
+  ;;
+
   let upstream_header = Logs.Tag.(def "upstream_header" Headers.pp |> add)
-  let downstream_body = Logs.Tag.(def "downstream_body" ppf_str |> add)
   let downstream_header = Logs.Tag.(def "downstream_header" Headers.pp |> add)
   let empty = Logs.Tag.empty
 end

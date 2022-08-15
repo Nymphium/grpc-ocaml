@@ -1,8 +1,8 @@
 (library
  (name Grpc_basic)
  (public_name grpc.basic)
- (libraries grpc.core core logs lwt.unix)
+ (libraries grpc.core logs)
  (inline_tests
   (flags -verbose))
  (preprocess
-  (pps ppx_deriving.std ppx_inline_test ppx_assert)))
+  (pps ppx_deriving.std)))

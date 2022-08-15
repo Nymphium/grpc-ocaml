@@ -1,7 +1,12 @@
-type 'res res =
-  ('res * Metadata.bwd, Status.Code.fail_bwd * string option * Metadata.bwd) result
+type 'a ok = 'a * Metadata.bwd
 
+type 'st fail = 'st * string option * Metadata.bwd
+  constraint 'st = [< Status.Code.fail_bwd ]
+
+type 'res res = ('res ok, Status.Code.fail_bwd fail) result
 type ('bwd, 'fwd) handler = Context.t -> Metadata.bwd -> 'bwd -> 'fwd res Lwt.t
+
+(** string as HTTP request/response body *)
 type base = string
 
 type t =
@@ -9,7 +14,6 @@ type t =
       { handler : ('bwd, 'fwd) handler
       ; marshall : 'fwd -> base
       ; unmarshall : base -> ('bwd, [ `FAILED_PRECONDITION ] * string option) Result.t
-            (** success to convert or fail (:> Status.Code.bwd) *)
       }
       -> t
 

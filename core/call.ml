@@ -4,18 +4,11 @@ open struct
   module M = T.Call
 end
 
-type send_metadata =
-  { mu : Lwt_mutex.t
-  ; md : Metadata.bwd
-  ; mutable sent : bool
-  }
-
 (** wrapped call data *)
 type t =
   { call : M.t
   ; cq : T.Completion.Queue.t
   ; flags : T.Flags.Write.t
-  ; send_metadata : send_metadata
   }
 
 type write_flag =
@@ -60,20 +53,7 @@ module Details = struct
   let destroy = F.Call.Details.destroy
 end
 
-let make_send_metadata ?(md = []) () =
-  let mu = Lwt_mutex.create () in
-  { md; mu; sent = false }
-;;
-
-let wrap_raw
-    ?(flags = Propagation_bits.defaults)
-    ?(send_metadata = make_send_metadata ())
-    ~cq
-    ~call
-    ()
-  =
-  { call; cq; flags; send_metadata }
-;;
+let wrap_raw ?(flags = Propagation_bits.defaults) ~cq ~call () = { call; cq; flags }
 
 let destroy { call; cq; _ } =
   F.Call.unref call;
@@ -82,7 +62,10 @@ let destroy { call; cq; _ } =
 
 let allocate () = malloc M.t
 
-(** @parm flags TODO: investigate write flag and/or propagate flag? *)
+(** make call to ["${host}/${method}"], which [host] is [get_target channel] by default.
+    If [parent] is not empty, the call is a child call of [parent].
+    [deadline] is inf_future by default.
+   @parm flags TODO: investigate write flag and/or propagate flag? *)
 let make
     ~channel
     ?parent
@@ -103,12 +86,11 @@ let make
     | None -> to_voidp null
     | Some parent -> parent.call
   in
-  let cq = F.Completion_queue.create_for_pluck __reserved__ in
+  let cq = Completion_queue.create_for_pluck () in
   let methd_slice = Slice.from_static_string methd in
-  let bg = Channel.get_bg channel in
   let call =
     F.Channel.create_call
-      bg.channel
+      channel.channel
       parent_call
       flags
       cq
@@ -145,15 +127,15 @@ let run_batch ?(tag = Ctypes.null) t ops =
     then failwith @@ Printf.sprintf "prepare call error(%s)" @@ M.Error.show err
   in
   let inf = Timespec.(inf_future Clock_type.realtime) in
-  let%lwt ev = Completion_queue.pluck t.cq inf tag in
+  let ev = Completion_queue.pluck t.cq inf tag in
   if ev @.* T.Event.success < 1
   then (
     let st = ev @.* T.Event.typ in
-    Lwt.fail_with @@ Printf.sprintf "run_batch failed(%s)" @@ T.Completion.Type.show st)
-  else Lwt.return (ops, ops_size)
+    failwith @@ Printf.sprintf "run_batch failed(%s)" @@ T.Completion.Type.show st)
+  else ops, ops_size
 ;;
 
-let unary_request ?(metadata = []) ?message t : string option Protoiso.res Lwt.t =
+let unary_request ?(metadata = []) ?message t : string option Protoiso.res =
   let (`Recv_initial_metadata recv_initial_metadata as rim) =
     Op.make_ref_initial_metadata ()
   in
@@ -179,7 +161,7 @@ let unary_request ?(metadata = []) ?message t : string option Protoiso.res Lwt.t
   stack |-> Batch_stack.details <-@ recv_status_on_client.details;
   stack |-> Batch_stack.error_message <-@ recv_status_on_client.error_message;
   stack |-> Batch_stack.tr <-@ recv_status_on_client.metadata;
-  let%lwt _o = run_batch ~tag t ops in
+  let _o = run_batch ~tag t ops in
   let status = !@(recv_status_on_client.status) in
   let md =
     let init_md = Metadata.to_bwd recv_initial_metadata.metadata in
@@ -190,13 +172,13 @@ let unary_request ?(metadata = []) ?message t : string option Protoiso.res Lwt.t
   match status with
   | `OK ->
     let recv_message = Byte_buffer.to_string_opt !@(recv_message.message) in
-    Lwt_result.return (recv_message, md)
+    Ok (recv_message, md)
   | #Status.Code.fail_bwd as status ->
     let details =
       let slice = !@(recv_status_on_client.details) in
       if is_null @@ Slice.start_ptr slice then None else Some (Slice.to_string slice)
     in
-    Lwt_result.fail (status, details, md)
+    Error (status, details, md)
 ;;
 
 let remote_read t is_metadata_received =
@@ -208,10 +190,10 @@ let remote_read t is_metadata_received =
   let stack, tag = Batch_stack.make_tag_pair () in
   stack |-> Batch_stack.recv_message <-@ recv_message.message;
   stack |-> Batch_stack.recv_initial_metadata <-@ recv_initial_metadata.metadata;
-  let%lwt _ = run_batch ~tag t ops in
+  let%lwt _ = Lwt_preemptive.detach (run_batch ~tag) t >|= fun f -> f ops in
   let () = Batch_stack.destroy stack in
   let md = Metadata.to_bwd recv_initial_metadata.metadata in
-  Lwt.return @@ (Byte_buffer.to_string_opt !@(recv_message.message), md)
+  Lwt.return (Byte_buffer.to_string_opt !@(recv_message.message), md)
 ;;
 
 let unary_response ?(code = `OK) ?details ?(md = []) ?(tr = []) t req =
@@ -234,11 +216,10 @@ let unary_response ?(code = `OK) ?details ?(md = []) ?(tr = []) t req =
   let stack = malloc Batch_stack.t in
   let tag = Ctypes.to_voidp @@ stack in
   stack |-> Batch_stack.cancelled <-@ recv_close_on_server.cancelled;
-  let%lwt _ = run_batch ~tag t ops in
+  let _ = run_batch ~tag t ops in
   let closed_on_server = deref @@ recv_close_on_server.cancelled in
   if closed_on_server <= 0
-  then Log.message __FILE__ __LINE__ `Info "not (properly) closed request by server";
-  Lwt.return_unit
+  then Log.message __FILE__ __LINE__ `Info "not (properly) closed request by server"
 ;;
 
 (** return `DEADLINE_EXCEEDED` response to its call *)
@@ -253,14 +234,14 @@ let with_timeout t deadline io =
   if Timespec.cmp deadline Timespec.inf_future' = 0
   then io
   else if Timespec.cmp deadline Timespec.inf_past' = 0
-  then deadline_exceeded t
+  then Lwt.return @@ deadline_exceeded t
   else
     Lwt.pick
       [ (let sec =
            Timespec.(to_micros @@ sub deadline (now Clock_type.realtime)) /. 1000_000.
          in
          let%lwt () = Lwt_unix.sleep sec in
-         deadline_exceeded t)
+         Lwt.return @@ deadline_exceeded t)
       ; io
       ]
 ;;

@@ -10,7 +10,6 @@ dev-repo: "git+https://github.com/Nymphium/grpc-ocaml.git"
 depends: [
   "ocaml"
   "dune" {< "3.2"} # just for test, to avoid this bug https://github.com/ocaml/dune/issues/5945
-  "core"
   "ctypes"
   "ctypes-foreign"
   "lwt"
@@ -19,8 +18,6 @@ depends: [
   "ocaml-protoc-plugin"
   "lwt_ppx"
   "ppx_deriving"
-  "ppx_yojson_conv"
-  "ppx_let"
   "odoc" { with-doc }
   "ppx_inline_test" { with-test }
   "alcotest" { with-test }

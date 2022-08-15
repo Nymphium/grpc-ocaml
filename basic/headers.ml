@@ -1,4 +1,3 @@
-open Core
 open Grpc_core
 
 open struct
@@ -9,14 +8,13 @@ end
 
 type t = Metadata.bwd
 
-let eq_key = String.equal
 let pp = Metadata.pp_bwd
 let show = Metadata.show_bwd
 let empty : t = []
 let append_list = ( @ )
-let get k h : Metadata.value option = List.Assoc.find ~equal:eq_key h k
-let[@inline] add k v h : t = List.Assoc.add ~equal:eq_key h k v
-let[@inline] upsert k v h = List.Assoc.remove ~equal:eq_key h k |> add v k
+let get k h : Metadata.value option = List.assoc_opt k h
+let[@inline] add k v h : t = (k, v) :: h
+let[@inline] upsert k v h = List.remove_assoc k h |> add v k
 
 (** manipulate `grpc-timeout` header
  see https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md *)

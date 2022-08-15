@@ -1,6 +1,6 @@
 open Import
 
-let default_service_handler_size = ref 5
+let default_service_handler_size = 5
 
 open struct
   module M = struct
@@ -15,9 +15,9 @@ open struct
       fun ?(message = message) svr -> if is_null svr then failwith message
     ;;
 
-    let request_call srv call detail md cq cq' tag =
-      Lwt_preemptive.detach request_call srv >|= fun f -> f call detail md cq cq' tag
-    ;;
+    (* let request_call srv call detail md cq cq' tag = *)
+    (* Lwt_preemptive.detach request_call srv >|= fun f -> f call detail md cq cq' tag *)
+    (* ;; *)
   end
 end
 
@@ -42,7 +42,7 @@ module Request_call_stack = struct
     free t
   ;;
 
-  let make_tag_pair ~c ~cd ~md =
+  let make_tag_pair ~call:c ~call_details:cd ~metadata:md =
     let t = malloc t in
     t |-> call <-@ c;
     t |-> call_details <-@ cd;
@@ -69,12 +69,12 @@ end
 
 (** Before handling RPC request, middlewares read context, headers and raw data, and inspect its context
 
-{|
+{
 empty |> add @@ fun ctx headers raw_data ->
   (* something *)
   let ctx' = Ctx.add key val ctx in
   ctx'
-|} *)
+} *)
 module Middlewares = struct
   type t = Context.t -> string option -> Metadata.bwd -> Context.t
 
@@ -97,10 +97,16 @@ type ('bwd, 'fwd) handler = ('bwd, 'fwd) Protoiso.handler
 (** *external* representation of handler type *)
 type handler_sort = [ `Unary ]
 
+type state =
+  [ `Running
+  | `Not_started
+  | `Stopped
+  ]
+
 type t =
   { server : M.t
   ; cq : T.Completion.Queue.t
-  ; mutable state : [ `Running | `Not_started | `Stopped ]
+  ; mutable state : state
   ; context : Context.t
   ; handlers : handlers
   ; middlewares : Middlewares.t
@@ -126,50 +132,47 @@ let make args middlewares =
   { server
   ; cq
   ; state = `Not_started
-  ; handlers = Hashtbl.create !default_service_handler_size
+  ; handlers = Hashtbl.create default_service_handler_size
   ; context = Context.empty
   ; middlewares
   ; lock = Lwt_mutex.create ()
   }
 ;;
 
-(** internal *)
+(** internal use *)
 let request_call t =
-  let open Lwt_result.Syntax in
   let call = Call.allocate () in
-  let cd = Call.Details.allocate () in
-  let md = Metadata.allocate () in
-  let stack, tag = Request_call_stack.make_tag_pair ~c:!@call ~cd ~md in
+  let call_details = Call.Details.allocate () in
+  let metadata = Metadata.allocate () in
+  let stack, tag =
+    Request_call_stack.make_tag_pair ~call:!@call ~call_details ~metadata
+  in
   let cq = Completion_queue.create_for_pluck () in
   let () = M.assert_exists t.server in
-  let%lwt err = M.request_call t.server call cd md cq t.cq tag in
-  let* () =
+  let err = M.request_call t.server call call_details metadata cq t.cq tag in
+  let () =
     if err <> T.Call.Error.OK
-    then
-      Lwt_result.lift
-      @@ Error (Printf.sprintf "prepare call error(%s)" @@ T.Call.Error.show err)
-    else Lwt_result.return ()
+    then failwith (Printf.sprintf "prepare call error(%s)" @@ T.Call.Error.show err)
   in
   let inf = Timespec.(inf_future Clock_type.realtime) in
-  let%lwt ev = Completion_queue.pluck t.cq inf tag in
-  let* () =
+  let ev = Completion_queue.pluck t.cq inf tag in
+  let () =
     if not @@ Event.is_success ev
     then (
       let st = Event.type_of ev in
-      Lwt_result.lift
-      @@ Error (Printf.sprintf "request_call failed(%s)" @@ T.Completion.Type.show st))
-    else Lwt_result.return ()
+      failwith (Printf.sprintf "request_call failed(%s)" @@ T.Completion.Type.show st))
+    (* else Lwt_result.return () *)
   in
   let deadline =
     Timespec.Clock_type.convert
-      !@(cd |-> T.Call_details.deadline)
+      !@(call_details |-> T.Call_details.deadline)
       Timespec.Clock_type.realtime
   in
-  let methd = Slice.to_string !@(cd |-> T.Call_details.methd) in
-  let host = Slice.to_string !@(cd |-> T.Call_details.host) in
+  let methd = Slice.to_string !@(call_details |-> T.Call_details.methd) in
+  let host = Slice.to_string !@(call_details |-> T.Call_details.host) in
   let call = Call.wrap_raw ~flags:Unsigned.UInt32.zero ~cq ~call:!@call () in
   Request_call_stack.destroy stack;
-  Lwt_result.return Rpc.{ methd; host; deadline; metadata = md; call }
+  Rpc.{ methd; host; deadline; metadata; call }
 ;;
 
 let shutdown t =
@@ -186,7 +189,7 @@ let shutdown t =
       M.shutdown_and_notify t.server t.cq null;
       M.cancel_all_calls t.server;
       (* wait all ops are cancelled *)
-      let%lwt ev = Completion_queue.pluck t.cq Timespec.inf_future' null in
+      let ev = Completion_queue.pluck t.cq Timespec.inf_future' null in
       let typ = Event.type_of ev in
       if typ <> T.Completion.Type.OP_COMPLETE
       then
@@ -197,14 +200,14 @@ let shutdown t =
       Lwt.return_unit)
 ;;
 
-let add_host ~host ~port ?creds t =
+(** add address to listen. It can be called multiple times before start the server
+   @param creds TODO: ccheck proper credentials *)
+let add_host ~host ~port ?(creds = Credentials.make_insecure ()) t =
   let () =
     M.assert_exists t.server;
     assert_not_running t
   in
   let addr = Printf.sprintf "%s:%d" host port in
-  (* TODO: ccheck proper credentials *)
-  let creds = Option.value ~default:(Credentials.make_insecure ()) creds in
   let recvd_port = M.add_http2_port t.server addr creds in
   let _ = Credentials.free creds in
   if recvd_port = 0
@@ -226,45 +229,49 @@ let exists_handler t ~methd = Hashtbl.mem t.handlers methd
 
 (** RPC handling dispatcher:
    receive a rpc, find its corresponding handler, add `host` and `target` to the context and exec handler *)
-let dispatch t Rpc.{ methd; host; metadata; call; deadline; _ } =
+let dispatch t Rpc.{ methd; host; metadata; call; deadline } =
   flip Lwt.catch (fun exn ->
       let bt = Printexc.get_backtrace () in
-      Log.message __FILE__ __LINE__ `Debug bt;
-      Call.unary_response call ~code:`INTERNAL ~details:(Printexc.to_string exn) None)
+      let details = Printexc.to_string exn in
+      let msg = String.concat "\n" [ details; bt ] in
+      Log.message __FILE__ __LINE__ `Error msg;
+      Lwt.return @@ Call.unary_response call ~code:`INTERNAL ~details None)
   @@ fun () ->
   match Hashtbl.find_opt t.handlers methd with
-  | None -> Call.unary_response ~code:`UNIMPLEMENTED call None
+  | None -> Lwt.return @@ Call.unary_response ~code:`UNIMPLEMENTED call None
   | Some handler ->
     Log.message __FILE__ __LINE__ `Debug @@ Printf.sprintf "handler found in %s" methd;
-    let%lwt req, md = Call.remote_read call (is_null metadata) in
+    (* TODO: get metadata from request *)
+    let%lwt req, md = Call.remote_read call false in
     let metadata = Metadata.to_bwd metadata in
     let context =
       t.middlewares t.context req md
       |> Context.(add target methd)
       |> Context.(add host) host
     in
-    Call.with_timeout call deadline
-    @@
-    (match handler with
-    | Unary { handler; marshall; unmarshall } ->
-      let%lwt res =
-        let open Lwt_result.Syntax in
-        let* umreq =
-          let req = Option.value ~default:"" req in
-          Lwt_result.lift
-          @@ Result.map_error (fun ((`FAILED_PRECONDITION as code), details) ->
-                 code, details, metadata)
-          @@ unmarshall req
+    Call.with_timeout
+      call
+      deadline
+      (match handler with
+      | Unary { handler; marshall; unmarshall } ->
+        let%lwt res =
+          let open Lwt_result.Syntax in
+          let* umreq =
+            let req = Option.value ~default:"" req in
+            Lwt_result.lift
+            @@ Result.map_error (fun ((`FAILED_PRECONDITION as code), details) ->
+                   code, details, metadata)
+            @@ unmarshall req
+          in
+          handler context md umreq
         in
-        handler context md umreq
-      in
-      (match res with
-      | Ok (res, metadata) ->
-        let%lwt res = Lwt.return @@ marshall res in
-        Call.unary_response call (Some res) ~md:metadata
-      | Error (code, details, md) ->
-        let code = (code :> Status.Code.bwd) in
-        Call.unary_response call ~code ~md ?details None))
+        (match res with
+        | Ok (res, md) ->
+          let res = marshall res in
+          Lwt.pause @@ Call.unary_response call ~md (Some res)
+        | Error (code, details, md) ->
+          let code = (code :> Status.Code.bwd) in
+          Lwt.return @@ Call.unary_response call ~code ~md ?details None))
 ;;
 
 (** start a server and run loop *)
@@ -282,16 +289,8 @@ let start t =
       Lwt.return_unit)
     else (
       let%lwt rio =
-        let open Lwt_result.Syntax in
-        let%lwt () = Lwt_io.printl "listen..." in
-        let* rpc = request_call t in
-        let () =
-          Lwt.async (fun () ->
-              dispatch t rpc
-              >>= fun _ ->
-              Rpc.destroy rpc;
-              Lwt_io.printl "ok")
-        in
+        let%lwt rpc = Lwt_preemptive.detach request_call t in
+        let () = Lwt.async (fun () -> dispatch t rpc >|= fun _ -> Rpc.destroy rpc) in
         Lwt_result.return ()
       in
       if t.state = `Running
