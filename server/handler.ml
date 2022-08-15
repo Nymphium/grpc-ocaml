@@ -16,40 +16,6 @@ type ('req, 'res) unary =
   -> Grpc_core.Server.t
   -> Grpc_core.Server.t
 
-(** make success response  *)
-let ok ?(metadata = []) res : 'a Grpc_core.Protoiso.res = Result.ok (res, metadata)
-
-(** composition of [ok] and [Lwt.return] *)
-let return ?metadata res = Lwt.return @@ ok ?metadata res
-
-(** make error response *)
-let fail ?(status = `INTERNAL) ?(metadata = []) ?detail () : 'a Grpc_core.Protoiso.res =
-  Result.error (status, detail, metadata)
-;;
-
-(** composition of [fail] and [Lwt.return] *)
-let fail' ?status ?metadata ?detail () = Lwt.return @@ fail ?status ?metadata ?detail ()
-
-(** let-operators support *)
-module Syntax = struct
-  let ok = ok
-  let return = return
-  let fail = fail
-  let fail' = fail'
-
-  (** bind *)
-  let ( let* ) m k : 'a Grpc_core.Protoiso.res Lwt.t = Lwt_result.bind m k
-
-  (** map *)
-  let ( let+ ) m k : 'a Grpc_core.Protoiso.res Lwt.t = Lwt_result.map k m
-
-  (** bind Result *)
-  let ( let> ) m k : 'a Grpc_core.Protoiso.res Lwt.t = Lwt_result.(bind (lift m) k)
-
-  (** bind IO *)
-  let ( let@ ) io k = Lwt_result.(bind (ok io) k)
-end
-
 (** Unary rpc handler *)
 module Unary = struct
   (** adds unary handler:

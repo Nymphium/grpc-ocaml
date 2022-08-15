@@ -1,9 +1,13 @@
 type 'a ok = 'a * Metadata.bwd
 
-type 'st fail = 'st * string option * Metadata.bwd
+type 'st fail' = 'st * string option * Metadata.bwd
   constraint 'st = [< Status.Code.fail_bwd ]
 
-type 'res res = ('res ok, Status.Code.fail_bwd fail) result
+and fail = Status.Code.fail_bwd fail'
+
+type 'a comp = ('a, fail) result
+and 'res res = 'res ok comp
+
 type ('bwd, 'fwd) handler = Context.t -> Metadata.bwd -> 'bwd -> 'fwd res Lwt.t
 
 (** string as HTTP request/response body *)

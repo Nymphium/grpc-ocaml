@@ -7,10 +7,10 @@ let handler =
   Grpc_server.Handler.(
     Unary.add EchoService.greet'
     @@ fun ctx _headers message ->
-    let open Syntax in
+    let open Grpc_basic.Syntax in
     let request_id = Grpc_server.Context.get Ctx.request_id ctx in
     let@ () = Logs_lwt.debug @@ fun m -> m "%s" request_id in
-    return message)
+    ok' message)
 ;;
 
 let middlewares =

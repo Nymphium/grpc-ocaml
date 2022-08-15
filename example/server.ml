@@ -22,12 +22,12 @@ let server host port =
   in
   let handlers =
     Grpc_server.Handler.(
-      let open Syntax in
+      let open Grpc_basic.Syntax in
       Unary.add EchoService.greet'
       @@ fun ctx _ message ->
       let request_id = Grpc_server.Context.get Ctx.request_id ctx in
       let@ () = Logs_lwt.debug (fun m -> m "request-id: %s" request_id) in
-      return message)
+      ok' message)
   in
   Grpc_server.make_insecure ~host ~port ~middlewares handlers
 ;;
