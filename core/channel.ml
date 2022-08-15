@@ -48,10 +48,7 @@ module Args = struct
 end
 
 module Credentials = struct
-  let free crd =
-    let () = F.Channel.Credentials.release crd in
-    Top.shutdown ()
-  ;;
+  let free crd = F.Channel.Credentials.release crd
 
   let make_insecure () =
     let () = Top.init () in

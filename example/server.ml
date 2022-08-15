@@ -28,19 +28,23 @@ let server host port =
       Logs.debug (fun m -> m "request-id: %s" request_id);
       return message)
   in
-  Grpc_server.establish ~host ~port ~middlewares handlers
+  Grpc_server.make_insecure ~host ~port ~middlewares handlers
 ;;
 
 let () =
   let open Settings in
-  Lazy.force log_init;
-  let () =
-    Lwt.(
-      async
-      @@ fun () ->
-      Logs.debug (fun m -> m "run gRPC echo server on %s:%d ..." host port);
-      server host port)
+  let server =
+    Logs.debug (fun m -> m "run gRPC echo server on %s:%d ..." host port);
+    server host port
+  in
+  let exception Break in
+  let () = Lwt.async @@ fun () -> Grpc_server.start_with_handle_shutdown server in
+  let _ =
+    Lwt_unix.on_signal Sys.sigint (fun _ ->
+        print_endline "break";
+        raise Break)
   in
   let forever, _ = Lwt.wait () in
-  Lwt_main.run forever
+  try Lwt_main.run forever with
+  | Break -> ()
 ;;

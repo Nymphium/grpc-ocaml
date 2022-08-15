@@ -35,7 +35,7 @@ let server host port =
       print_endline request_id;
       return message)
   in
-  Grpc_server.establish ~host ~port ~middlewares handlers
+  Grpc_server.make_insecure ~host ~port ~middlewares handlers
 ;;
 
 let () =
@@ -44,12 +44,13 @@ let () =
   Lwt_main.run
   @@
   let open Lwt.Syntax in
+  let server = server host port in
   let () =
     Lwt.(
       async
       @@ fun () ->
       print_endline "establish server...";
-      server host port)
+      Grpc_server.start_with_handle_shutdown server)
   in
   let* res = client host port in
   let* _ = client host port in

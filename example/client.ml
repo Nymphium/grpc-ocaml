@@ -11,12 +11,10 @@ let send_greet client =
 ;;
 
 let () =
-  let open Settings in
-  let () = Lazy.force log_init in
   Lwt_main.run
   @@
   let open Lwt.Syntax in
-  let* _res = send_greet client in
+  (* let* _res = send_greet client in *)
   let* res = send_greet client in
   match res with
   | Ok (msg, _) ->

@@ -14,6 +14,10 @@ open struct
       let message = "server destroyed" in
       fun ?(message = message) svr -> if is_null svr then failwith message
     ;;
+
+    let request_call srv call detail md cq cq' tag =
+      Lwt_preemptive.detach request_call srv >|= fun f -> f call detail md cq cq' tag
+    ;;
   end
 end
 
@@ -138,7 +142,7 @@ let request_call t =
   let stack, tag = Request_call_stack.make_tag_pair ~c:!@call ~cd ~md in
   let cq = Completion_queue.create_for_pluck () in
   let () = M.assert_exists t.server in
-  let err = M.request_call t.server call cd md cq t.cq tag in
+  let%lwt err = M.request_call t.server call cd md cq t.cq tag in
   let* () =
     if err <> T.Call.Error.OK
     then
@@ -169,16 +173,16 @@ let request_call t =
 ;;
 
 let shutdown t =
-  if t.state = `Stopped
+  if t.state <> `Running
   then Lwt.return_unit
   else (
     t.state <- `Stopped;
     Lwt_mutex.unlock t.lock;
-    Lwt_mutex.with_lock t.lock
-    @@ fun () ->
     if M.is_null t.server
     then Lwt.return_unit
-    else (
+    else
+      Lwt_mutex.with_lock t.lock
+      @@ fun () ->
       M.shutdown_and_notify t.server t.cq null;
       M.cancel_all_calls t.server;
       (* wait all ops are cancelled *)
@@ -190,7 +194,7 @@ let shutdown t =
         @@ Printf.sprintf "bad shutdown_and_notify result: %s"
         @@ T.Completion.Type.show typ;
       M.destroy t.server;
-      Lwt.return_unit))
+      Lwt.return_unit)
 ;;
 
 let add_host ~host ~port ?creds t =
@@ -224,6 +228,8 @@ let exists_handler t ~methd = Hashtbl.mem t.handlers methd
    receive a rpc, find its corresponding handler, add `host` and `target` to the context and exec handler *)
 let dispatch t Rpc.{ methd; host; metadata; call; deadline; _ } =
   flip Lwt.catch (fun exn ->
+      let bt = Printexc.get_backtrace () in
+      Log.message __FILE__ __LINE__ `Debug bt;
       Call.unary_response call ~code:`INTERNAL ~details:(Printexc.to_string exn) None)
   @@ fun () ->
   match Hashtbl.find_opt t.handlers methd with
@@ -277,12 +283,20 @@ let start t =
     else (
       let%lwt rio =
         let open Lwt_result.Syntax in
+        let%lwt () = Lwt_io.printl "listen..." in
         let* rpc = request_call t in
-        Lwt.async (fun () -> dispatch t rpc >|= fun _ -> Rpc.destroy rpc);
+        let () =
+          Lwt.async (fun () ->
+              dispatch t rpc
+              >>= fun _ ->
+              Rpc.destroy rpc;
+              Lwt_io.printl "ok")
+        in
         Lwt_result.return ()
       in
-      Result.iter_error (Log.message __FILE__ __LINE__ `Error) rio;
+      if t.state = `Running
+      then Result.iter_error (Log.message __FILE__ __LINE__ `Error) rio;
       go ())
   in
-  Lwt_mutex.with_lock t.lock go
+  go ()
 ;;

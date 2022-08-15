@@ -18,3 +18,5 @@ let shutdown () =
     let%lwt () = Lwt_mvar.put is_shutdowed true in
     Lwt.return @@ shutdown ())
 ;;
+
+let () = Lwt_main.Enter_iter_hooks.add_first init |> ignore
