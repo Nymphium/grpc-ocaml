@@ -68,25 +68,3 @@ let to_bwd fwd =
 ;;
 
 let get_bwd t k = List.assoc_opt k t
-
-let inspect' t =
-  let%lwt k = Slice.raw_bytes @@ t @.* M.key in
-  let%lwt v = Slice.raw_bytes @@ t @.* M.value in
-  Lwt.return @@ Printf.sprintf {|{ key: "%s"; value: "%s" }|} k v
-;;
-
-let%test "md1 iso" =
-  let k = "hello" in
-  let v = "world" in
-  let fwd1 = fwd1 ~k ~v in
-  let k', v' = bwd1 fwd1 in
-  k = k' && v = v'
-;;
-
-let%test "md iso" =
-  let bwd = [ "hello", "world" ] in
-  let fwd = make bwd in
-  let bwd' = to_bwd fwd in
-  let () = destroy fwd in
-  bwd = bwd'
-;;

@@ -10,8 +10,6 @@ type t =
   }
 
 module Args = struct
-  let inspect = Inspect.make (module M)
-
   let make (assoc : (string * Args.Value.v) list) =
     let size = List.length assoc in
     let t = Ctypes.make M.Arg.t in

@@ -43,29 +43,3 @@ let from_copied_buffer s l =
 ;;
 
 let unref = F.Slice.unref
-let inspect = Inspect.make_structure (module M)
-
-let%test "slice iso" =
-  let slice = from_static_string "hello" in
-  let _ = to_string slice in
-  let _ = to_string slice in
-  let s' = to_string slice in
-  let () = unref slice in
-  String.equal s' "hello"
-;;
-
-let%test "is empty" =
-  let slice = from_static_string "hello" in
-  let is_empty = is_empty slice in
-  let () = unref slice in
-  not is_empty
-;;
-
-let%test "slice allocation identity" =
-  let b1 = allocate () in
-  let b2 = allocate () in
-  let res = not (b1 == b2) in
-  let () = unref b1 in
-  let () = unref b2 in
-  res
-;;

@@ -2,7 +2,6 @@
  (name grpc_core)
  (public_name grpc.core)
  (libraries grpc.stub hmap lwt lwt.unix)
- (inline_tests)
  (preprocess
-  (staged_pps ppx_deriving.std lwt_ppx ppx_inline_test)))
+  (pps ppx_deriving.std lwt_ppx)))
 

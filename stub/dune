@@ -10,15 +10,7 @@
  (ctypes
   (external_library_name grpc)
   (headers
-   (include
-    "grpc/grpc.h"
-    "grpc/grpc_security.h"
-    "grpc/slice.h"
-    "grpc/byte_buffer_reader.h"
-    "grpc/support/log.h"
-    "grpc/support/alloc.h"
-    "grpc/support/sync.h"
-    "grpc/impl/codegen/sync_generic.h"))
+   (preamble %{read:headers.h}))
   (type_description
    (instance Type)
    (functor Type_description))

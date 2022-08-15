@@ -7,8 +7,6 @@ open struct
   end
 end
 
-let inspect = Inspect.make_structure (module M.T)
-
 let allocate () =
   let finalise t = F.Byte_buffer.destroy @@ Ctypes.addr t in
   let t = Ctypes.make ~finalise T.Byte_buffer.t in
@@ -37,29 +35,4 @@ let to_string_opt b =
     else (
       let b = F.Byte_buffer.Reader.readall reader in
       Some (Slice.to_string b)))
-;;
-
-let%test "bb iso" =
-  let buf = from_string "foobar" in
-  let _ = to_string_opt buf in
-  let _ = to_string_opt buf in
-  let s' = to_string_opt buf in
-  let () = destroy buf in
-  s' = Some "foobar"
-;;
-
-let%test "length" =
-  let buf = from_string "blength" in
-  let len = length buf in
-  let () = destroy buf in
-  len = 7
-;;
-
-let%test "bb allocation identity" =
-  let b1 = allocate () in
-  let b2 = allocate () in
-  let res = not (b1 == b2) in
-  let () = destroy b1 in
-  let () = destroy b2 in
-  res
 ;;

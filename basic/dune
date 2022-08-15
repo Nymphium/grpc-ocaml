@@ -2,7 +2,5 @@
  (name Grpc_basic)
  (public_name grpc.basic)
  (libraries grpc.core logs)
- (inline_tests
-  (flags -verbose))
  (preprocess
   (pps ppx_deriving.std)))
