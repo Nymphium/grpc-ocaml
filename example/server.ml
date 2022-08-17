@@ -18,6 +18,14 @@ let server host port =
              |> Option.value
                   ~default:(Random.int 50000 |> Printf.sprintf "request-id-is-%d")
            in
+           let raw_data =
+             Fun.flip Option.map _raw_data
+             @@ fun data ->
+             String.to_seq data
+             |> Seq.map Char.code
+             |> Seq.fold_left (Printf.sprintf "%s <%d>") ""
+           in
+           let () = print_endline (Option.value ~default:"" raw_data) in
            Context.add Ctx.request_id request_id ctx)
   in
   let handlers =

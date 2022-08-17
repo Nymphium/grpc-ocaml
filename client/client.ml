@@ -13,6 +13,10 @@ type t =
   ; unary : 'req 'res. ('req, 'res) unary
   }
 
+(** send an unary request:
+ @param ?timeout: optional int as timeout (second)
+ @param ?request_id: optional string as "x-request-id" for tracking forwarding request
+  *)
 and ('req, 'res) unary =
   (module Ocaml_protoc_plugin.Service.Rpc
      with type Request.t = 'req
@@ -23,11 +27,7 @@ and ('req, 'res) unary =
   -> 'req
   -> 'res Protoiso.res Lwt.t
 
-(**
- [make service_addr service'] makes gRPC client.
- @param ?timeout: optional int as timeout (second)
- @param ?request_id: optional string as "x-request-id" for tracking forwarding request
- *)
+(** [make service_addr service'] makes gRPC client. *)
 let make ~host ~port ?credentials ?(args = []) () =
   let addr = Printf.sprintf "%s:%d" host port in
   let channel = Channel.make ?credentials addr args in
@@ -42,7 +42,9 @@ let make ~host ~port ?credentials ?(args = []) () =
       Option.(value ~default:id @@ map (fun id -> Headers.add "request_id" id) request_id)
     in
     fun ?(metadata = []) req ->
-      let metadata = Headers.(metadata |> Timeout.set_second timeout) |> set_request_id in
+      ignore timeout;
+      (* TODO: correctly send metadata *)
+      (* let metadata = Headers.(metadata |> Timeout.set_second timeout) |> set_request_id in *)
       let body = PB.Writer.contents @@ decoder req in
       let call = Call.make ~channel ~methd:path () in
       Lwt.return @@ Call.unary_request call ~metadata ~message:body

@@ -230,19 +230,20 @@ let exists_handler t ~methd = Hashtbl.mem t.handlers methd
 (** RPC handling dispatcher:
    receive a rpc, find its corresponding handler, add `host` and `target` to the context and exec handler *)
 let dispatch t Rpc.{ methd; host; metadata; call; deadline } =
-  flip Lwt.catch (fun exn ->
-      let bt = Printexc.get_backtrace () in
-      let details = Printexc.to_string exn in
-      let msg = String.concat "\n" [ details; bt ] in
-      Log.message __FILE__ __LINE__ `Error msg;
-      Lwt.return @@ Call.unary_response call ~code:`INTERNAL ~details None)
+  Lwt.protected
+  @@ flip Lwt.catch (fun exn ->
+         let bt = Printexc.get_backtrace () in
+         let details = Printexc.to_string exn in
+         let msg = String.concat "\n" [ details; bt ] in
+         Log.message __FILE__ __LINE__ `Error msg;
+         Lwt.return @@ Call.unary_response call ~code:`INTERNAL ~details None)
   @@ fun () ->
   match Hashtbl.find_opt t.handlers methd with
   | None -> Lwt.return @@ Call.unary_response ~code:`UNIMPLEMENTED call None
   | Some handler ->
     Log.message __FILE__ __LINE__ `Debug @@ Printf.sprintf "handler found in %s" methd;
     (* TODO: get metadata from request *)
-    let%lwt req, md = Call.remote_read call false in
+    let req, md = Call.remote_read call false in
     let metadata = Metadata.to_bwd metadata in
     let context =
       t.middlewares t.context req md
@@ -268,7 +269,7 @@ let dispatch t Rpc.{ methd; host; metadata; call; deadline } =
         (match res with
         | Ok (res, md) ->
           let res = marshall res in
-          Lwt.pause @@ Call.unary_response call ~md (Some res)
+          Lwt.return @@ Call.unary_response call ~md (Some res)
         | Error (code, details, md) ->
           let code = (code :> Status.Code.bwd) in
           Lwt.return @@ Call.unary_response call ~code ~md ?details None))
@@ -289,9 +290,11 @@ let start t =
       Lwt.return_unit)
     else (
       let%lwt rio =
-        let%lwt rpc = Lwt_preemptive.detach request_call t in
-        let () = Lwt.async (fun () -> dispatch t rpc >|= fun _ -> Rpc.destroy rpc) in
-        Lwt_result.return ()
+        Lwt_result.map_error Printexc.to_string
+        @@ Lwt_result.catch
+        @@ let%lwt rpc = Lwt_preemptive.detach request_call t in
+           let () = Lwt.async (fun () -> dispatch t rpc >|= fun _ -> Rpc.destroy rpc) in
+           Lwt.return ()
       in
       if t.state = `Running
       then Result.iter_error (Log.message __FILE__ __LINE__ `Error) rio;

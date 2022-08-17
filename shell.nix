@@ -1,5 +1,6 @@
 let
   pkgs = import ./nix/pkgs.nix;
+  ghz = pkgs.callPackage ./nix/ghz.nix {};
   ocamlPackages = pkgs.callPackage ./nix/ocamlPackages.nix {};
   inherit (pkgs.callPackage ./. { inherit ocamlPackages; }) opam devInputs;
 
@@ -9,11 +10,13 @@ let
   yarn = pkgs.yarn.override {
     nodejs = pkgs.nodejs-slim-16_x;
   };
-
 in
 opam.grpc.overrideAttrs (_: {
   buildInputs = devInputs ++ [
     ocamlformat
+
+    # for benchmark
+    ghz
 
     # for client test
     yarn

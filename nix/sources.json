@@ -11,6 +11,18 @@
         "url": "https://github.com/nymphium/core_unix/archive/3724c81cb0f1dd4c0f88e30837cbf928b49c7c93.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
+    "ghz": {
+        "branch": "master",
+        "description": "Simple gRPC benchmarking and load testing tool",
+        "homepage": "https://ghz.sh",
+        "owner": "bojand",
+        "repo": "ghz",
+        "rev": "3935e2e9146ff28a5d30267feb571b014aa122f4",
+        "sha256": "0g0j70xqdgyx88g7bbl070i143lyai0xj3277d1zc7kxlg6vzd9y",
+        "type": "tarball",
+        "url": "https://github.com/bojand/ghz/archive/3935e2e9146ff28a5d30267feb571b014aa122f4.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
     "niv": {
         "branch": "master",
         "description": "Easy dependency management for Nix projects",

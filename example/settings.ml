@@ -1,5 +1,5 @@
 let host = "localhost"
-let port = 20000
+let port = 50051
 
 let () =
   Fmt_tty.setup_std_outputs ();

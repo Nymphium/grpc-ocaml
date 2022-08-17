@@ -4,18 +4,6 @@ open struct
   module M = T.Call
 end
 
-(** wrapped call data *)
-type t =
-  { call : M.t
-  ; cq : T.Completion.Queue.t
-  ; flags : T.Flags.Write.t
-  }
-
-type write_flag =
-  [ `Buffer_hit
-  | `No_compress
-  ]
-
 module Batch_stack = struct
   type t
 
@@ -52,6 +40,18 @@ module Details = struct
 
   let destroy = F.Call.Details.destroy
 end
+
+(** wrapped call data *)
+type t =
+  { call : M.t
+  ; cq : T.Completion.Queue.t
+  ; flags : T.Flags.Write.t
+  }
+
+type write_flag =
+  [ `Buffer_hit
+  | `No_compress
+  ]
 
 let wrap_raw ?(flags = Propagation_bits.defaults) ~cq ~call () = { call; cq; flags }
 
@@ -190,21 +190,29 @@ let remote_read t is_metadata_received =
   let stack, tag = Batch_stack.make_tag_pair () in
   stack |-> Batch_stack.recv_message <-@ recv_message.message;
   stack |-> Batch_stack.recv_initial_metadata <-@ recv_initial_metadata.metadata;
-  let%lwt _ = Lwt_preemptive.detach (run_batch ~tag) t >|= fun f -> f ops in
+  let _ = run_batch ~tag t ops in
   let () = Batch_stack.destroy stack in
   let md = Metadata.to_bwd recv_initial_metadata.metadata in
-  Lwt.return (Byte_buffer.to_string_opt !@(recv_message.message), md)
+  Byte_buffer.to_string_opt !@(recv_message.message), md
 ;;
 
-let unary_response ?(code = `OK) ?details ?(md = []) ?(tr = []) t req =
+(** send unary response: run RECV_CLOSE_ON_SERVER, SEND_INITIAL_METADATA and SEND_STATUS_FROM_SERVER ops *)
+let unary_response ?(code = `OK) ?details ?(md = []) ?(tr = []) t res =
   let code = Status.Code.of_bwd code in
   let (`Recv_close_on_server recv_close_on_server as rcos) =
     Op.make_ref_recv_close_on_server ()
   in
   let ops =
     let add_msg =
-      match req with
-      | Some req -> List.cons (`Send_message req)
+      match res with
+      | Some res ->
+        let () =
+          print_endline
+            (String.to_seq res
+            |> Seq.map Char.code
+            |> Seq.fold_left (Printf.sprintf "%s <%d>") "")
+        in
+        List.cons (`Send_message res)
       | None -> Fun.id
     in
     add_msg
