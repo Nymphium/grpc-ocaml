@@ -8,7 +8,17 @@ open struct
 end
 
 let core_version = F.version_s ()
-let init () = if is_initialized () <> 1 then init ()
+
+let init () =
+  if is_initialized () <> 1
+  then
+    Log.message
+      __FILE__
+      __LINE__
+      `Debug
+      (Printf.sprintf "grpc-ocaml with grpc-core %s(%s)" core_version (F.g_stands_for ()));
+  init ()
+;;
 
 let shutdown () =
   let%lwt is_shutdowed' = Lwt_mvar.take is_shutdowed in

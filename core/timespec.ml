@@ -21,6 +21,11 @@ end
 
 type t = M.t Ctypes.structure
 
+type t' =
+  [ `Millis of int64
+  | `Seconds of int64
+  ]
+
 let sec_of_int = Int64.of_int
 let nsec_of_int = Int32.of_int
 let int_of_sec = Int64.to_int
@@ -47,7 +52,7 @@ let make ?(sec = 0) ?(nsec = 0) () =
 let inf_future' = inf_future Clock_type.realtime
 let inf_past' = inf_past Clock_type.realtime
 
-let now_after t =
+let now_after (t : t') =
   let now = now Clock_type.realtime in
   let tic =
     match t with

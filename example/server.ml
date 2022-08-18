@@ -9,7 +9,7 @@ let server host port =
     let open Grpc_server in
     let open Middlewares in
     empty
-    |> add (fun ctx _raw_data headers ->
+    |> add (fun ctx headers _raw_data ->
            let request_id =
              List.assoc_opt "request-id" headers
              |> (function
@@ -18,14 +18,6 @@ let server host port =
              |> Option.value
                   ~default:(Random.int 50000 |> Printf.sprintf "request-id-is-%d")
            in
-           let raw_data =
-             Fun.flip Option.map _raw_data
-             @@ fun data ->
-             String.to_seq data
-             |> Seq.map Char.code
-             |> Seq.fold_left (Printf.sprintf "%s <%d>") ""
-           in
-           let () = print_endline (Option.value ~default:"" raw_data) in
            Context.add Ctx.request_id request_id ctx)
   in
   let handlers =
@@ -35,6 +27,7 @@ let server host port =
       @@ fun ctx _ message ->
       let request_id = Grpc_server.Context.get Ctx.request_id ctx in
       let@ () = Logs_lwt.debug (fun m -> m "request-id: %s" request_id) in
+      (* let@ () = Lwt_unix.sleep 0.1 in *)
       ok' message)
   in
   Grpc_server.make_insecure ~host ~port ~middlewares handlers
@@ -43,7 +36,6 @@ let server host port =
 let () =
   let open Settings in
   let server = server host port in
-  let exception Break in
   let () =
     Lwt.async
     @@ fun () ->
@@ -51,8 +43,6 @@ let () =
     let* () = Logs_lwt.debug (fun m -> m "run gRPC echo server on %s:%d ..." host port) in
     Grpc_server.start_with_handle_shutdown server
   in
-  let _ = Lwt_unix.on_signal Sys.sigint (fun _ -> raise Break) in
   let forever, _ = Lwt.wait () in
-  try Lwt_main.run forever with
-  | Break -> ()
+  Lwt_main.run forever
 ;;

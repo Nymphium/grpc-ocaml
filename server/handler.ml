@@ -64,8 +64,8 @@ Unary.add rpc @@ fun ctx req md ->
         t
         ~typ:`Unary
         ~methd
-        ~unmarshall:decode
-        ~marshall:encode
+        ~unmarshal:decode
+        ~marshal:encode
         handler';
       t
  ;;

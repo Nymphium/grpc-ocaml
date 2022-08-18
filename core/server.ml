@@ -76,16 +76,16 @@ empty |> add @@ fun ctx headers raw_data ->
   ctx'
 } *)
 module Middlewares = struct
-  type t = Context.t -> string option -> Metadata.bwd -> Context.t
+  type t = Context.t -> Metadata.bwd -> string option -> Context.t
 
   let empty : t = fun c _ _ -> c
 
   (** add middleware: read context, headers and raw data, and inspect context
    *)
   let add : t -> t -> t =
-   fun newm m ctx data md ->
-    let ctx' = m ctx data md in
-    newm ctx' data md
+   fun newm m ctx md data ->
+    let ctx' = m ctx md data in
+    newm ctx' md data
  ;;
 end
 
@@ -214,14 +214,14 @@ let add_host ~host ~port ?(creds = Credentials.make_insecure ()) t =
   then failwith @@ Printf.sprintf "failed to add address to server %s" addr
 ;;
 
-let add_handler t ~methd ~typ ~marshall ~unmarshall handler =
+let add_handler t ~methd ~typ ~marshal ~unmarshal handler =
   let () =
     M.assert_exists t.server;
     assert_not_running t
   in
   match Hashtbl.find_opt t.handlers methd, typ with
   | None, `Unary ->
-    Hashtbl.add t.handlers methd (Protoiso.make ~marshall ~unmarshall ~handler)
+    Hashtbl.add t.handlers methd (Protoiso.make ~marshal ~unmarshal ~handler)
   | Some _, _ -> failwith @@ Printf.sprintf "handler already exists in %s" methd
 ;;
 
@@ -246,7 +246,7 @@ let dispatch t Rpc.{ methd; host; metadata; call; deadline } =
     let req, md = Call.remote_read call false in
     let metadata = Metadata.to_bwd metadata in
     let context =
-      t.middlewares t.context req md
+      t.middlewares t.context md req
       |> Context.(add target methd)
       |> Context.(add host) host
     in
@@ -254,7 +254,7 @@ let dispatch t Rpc.{ methd; host; metadata; call; deadline } =
       call
       deadline
       (match handler with
-      | Unary { handler; marshall; unmarshall } ->
+      | Unary { handler; marshal; unmarshal } ->
         let%lwt res =
           let open Lwt_result.Syntax in
           let* umreq =
@@ -262,18 +262,61 @@ let dispatch t Rpc.{ methd; host; metadata; call; deadline } =
             Lwt_result.lift
             @@ Result.map_error (fun ((`FAILED_PRECONDITION as code), details) ->
                    code, details, metadata)
-            @@ unmarshall req
+            @@ unmarshal req
           in
           handler context md umreq
         in
         (match res with
         | Ok (res, md) ->
-          let res = marshall res in
+          let res = marshal res in
           Lwt.return @@ Call.unary_response call ~md (Some res)
         | Error (code, details, md) ->
           let code = (code :> Status.Code.bwd) in
           Lwt.return @@ Call.unary_response call ~code ~md ?details None))
 ;;
+
+(** schedules handling process *)
+module Scheduler = struct
+  (** handling processes can be run simultaneously up to *)
+  let max_running = 20
+
+  module Running_count = struct
+    let t = Lwt_mvar.create 0
+
+    let map f =
+      let%lwt v = Lwt_mvar.take t in
+      f v
+    ;;
+
+    let modify f = map @@ fun v -> Lwt_mvar.put t (f v)
+    let incr () = modify (( + ) 1)
+    let decr () = modify (flip ( - ) 1)
+  end
+
+  let tic =
+    match !Completion_queue.tic with
+    | `Millis millis -> Int64.to_float millis /. 1000.
+    | `Seconds secs -> Int64.to_float secs
+  ;;
+
+  let[@tail_cons_mod] rec wait () =
+    Running_count.map
+    @@ fun running_count ->
+    let%lwt () = Lwt_mvar.put Running_count.t running_count in
+    if running_count > max_running then Lwt_unix.sleep tic >>= wait else Lwt.return_unit
+  ;;
+
+  let scheudule fn =
+    let () =
+      Lwt.async
+      @@ fun () ->
+      let%lwt () = wait () in
+      let%lwt () = Running_count.incr () in
+      Lwt.finalize fn Running_count.decr
+    in
+    Lwt.return_unit
+  ;;
+end
 
 (** start a server and run loop *)
 let start t =
@@ -293,12 +336,11 @@ let start t =
         Lwt_result.map_error Printexc.to_string
         @@ Lwt_result.catch
         @@ let%lwt rpc = Lwt_preemptive.detach request_call t in
-           let () = Lwt.async (fun () -> dispatch t rpc >|= fun _ -> Rpc.destroy rpc) in
-           Lwt.return ()
+           Scheduler.scheudule @@ fun () -> dispatch t rpc >|= fun _ -> Rpc.destroy rpc
       in
       if t.state = `Running
       then Result.iter_error (Log.message __FILE__ __LINE__ `Error) rio;
       go ())
   in
-  go ()
+  Lwt_mutex.with_lock t.lock go
 ;;

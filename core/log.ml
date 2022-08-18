@@ -56,10 +56,7 @@ let set_log_callback fn =
 ;;
 
 let message file line severity msg =
-  let f file line severity msg =
-    let mf = Lwt_preemptive.detach F.Log.message in
-    Lwt.async @@ fun () -> mf file >|= fun f' -> f' line severity msg
-  in
+  let f file line severity msg = F.Log.message file line severity msg in
   let severity = log_level_of_severity severity in
   f file line severity msg
 ;;

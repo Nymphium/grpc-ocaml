@@ -95,7 +95,7 @@ let make (bwd : bwd) =
     it |-> D.Send_initial_metadata.count <-@ size;
     op
   | `Send_message msg ->
-    let msg' = Byte_buffer.from_string msg in
+    let msg' = Byte_buffer.from_string ~copy:true msg in
     let it = data |-> D.send_message in
     it |-> D.Send_message.send_message <-@ msg';
     op

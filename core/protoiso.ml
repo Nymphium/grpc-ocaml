@@ -16,9 +16,9 @@ type base = string
 type t =
   | Unary :
       { handler : ('bwd, 'fwd) handler
-      ; marshall : 'fwd -> base
-      ; unmarshall : base -> ('bwd, [ `FAILED_PRECONDITION ] * string option) Result.t
+      ; marshal : 'fwd -> base
+      ; unmarshal : base -> ('bwd, [ `FAILED_PRECONDITION ] * string option) Result.t
       }
       -> t
 
-let make ~marshall ~unmarshall ~handler = Unary { handler; marshall; unmarshall }
+let make ~marshal ~unmarshal ~handler = Unary { handler; marshal; unmarshal }

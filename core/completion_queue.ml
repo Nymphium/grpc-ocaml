@@ -5,7 +5,7 @@ open struct
 end
 
 (** 1 tic 20 msec by default *)
-let tic : [ `Millis of int64 | `Seconds of int64 ] ref = ref (`Millis 20L)
+let tic : Timespec.t' ref = ref (`Millis 20L)
 
 let create_for_pluck () = F.Completion_queue.create_for_pluck __reserved__
 

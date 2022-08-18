@@ -56,8 +56,8 @@ type write_flag =
 let wrap_raw ?(flags = Propagation_bits.defaults) ~cq ~call () = { call; cq; flags }
 
 let destroy { call; cq; _ } =
-  F.Call.unref call;
-  F.Completion_queue.destroy cq
+  F.Completion_queue.destroy cq;
+  F.Call.unref call
 ;;
 
 let allocate () = malloc M.t
@@ -135,7 +135,7 @@ let run_batch ?(tag = Ctypes.null) t ops =
   else ops, ops_size
 ;;
 
-let unary_request ?(metadata = []) ?message t : string option Protoiso.res =
+let unary_request ?(metadata = []) ?message t =
   let (`Recv_initial_metadata recv_initial_metadata as rim) =
     Op.make_ref_initial_metadata ()
   in
@@ -205,14 +205,7 @@ let unary_response ?(code = `OK) ?details ?(md = []) ?(tr = []) t res =
   let ops =
     let add_msg =
       match res with
-      | Some res ->
-        let () =
-          print_endline
-            (String.to_seq res
-            |> Seq.map Char.code
-            |> Seq.fold_left (Printf.sprintf "%s <%d>") "")
-        in
-        List.cons (`Send_message res)
+      | Some res -> List.cons (`Send_message res)
       | None -> Fun.id
     in
     add_msg
@@ -225,6 +218,7 @@ let unary_response ?(code = `OK) ?details ?(md = []) ?(tr = []) t res =
   let tag = Ctypes.to_voidp @@ stack in
   stack |-> Batch_stack.cancelled <-@ recv_close_on_server.cancelled;
   let _ = run_batch ~tag t ops in
+  let () = Batch_stack.destroy stack in
   let closed_on_server = deref @@ recv_close_on_server.cancelled in
   if closed_on_server <= 0
   then Log.message __FILE__ __LINE__ `Info "not (properly) closed request by server"

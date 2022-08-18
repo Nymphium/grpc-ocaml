@@ -12,6 +12,9 @@ grpc-ocaml
 - [x] Context
 - [x] Middlewares
 
+# requirements
+- libgrpc (>= 1.45)
+
 # Package details
 - `grpc.stub` ... just a C FFI using ctypes
 - `grpc.core` ... wrappers for `grpc.stub` with lwt

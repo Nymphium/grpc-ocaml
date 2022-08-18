@@ -17,8 +17,11 @@ let allocate () =
 let length b = Unsigned.Size_t.to_int @@ F.Byte_buffer.length b
 let destroy = F.Byte_buffer.destroy
 
-let from_string s =
-  let slice = F.Slice.from_static_string s in
+let from_string ?(copy = false) s =
+  let slice_of_string =
+    if copy then F.Slice.from_copied_string else F.Slice.from_static_string
+  in
+  let slice = slice_of_string s in
   let buf = F.Byte_buffer.create_raw (Ctypes.addr slice) (Unsigned.Size_t.of_int 1) in
   let () = F.Slice.unref slice in
   buf

@@ -17,7 +17,7 @@ let middlewares =
   let open Grpc_server in
   let open Middlewares in
   empty
-  |> add (fun ctx _data headers ->
+  |> add (fun ctx headers _data ->
          let request_id =
            List.assoc_opt "request-id" headers
            |> (function
