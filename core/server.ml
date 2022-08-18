@@ -14,10 +14,6 @@ open struct
       let message = "server destroyed" in
       fun ?(message = message) svr -> if is_null svr then failwith message
     ;;
-
-    (* let request_call srv call detail md cq cq' tag = *)
-    (* Lwt_preemptive.detach request_call srv >|= fun f -> f call detail md cq cq' tag *)
-    (* ;; *)
   end
 end
 
