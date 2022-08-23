@@ -26,11 +26,7 @@ module Credentials = struct
   type t = M.Credentials.t
 
   let free crd = F.Channel.Credentials.release crd
-
-  let make_insecure () =
-    let () = Top.init () in
-    F.Channel.Credentials.create_insecure ()
-  ;;
+  let make_insecure () = F.Channel.Credentials.create_insecure ()
 end
 
 let free_internal = F.Channel.destroy

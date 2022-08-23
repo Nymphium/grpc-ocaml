@@ -3,6 +3,8 @@ open Import
 module Code = struct
   include T.Status_code
 
+  type raw = t
+
   (** @see https://github.com/googleapis/googleapis/blob/master/google/rpc/code.proto *)
   type fail_bwd =
     [ `CANCELLED [@value 1]

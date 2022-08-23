@@ -18,19 +18,17 @@ open struct
 end
 
 module Credentials = struct
-  type t = T.Server.Credentials.t
-
-  let free = F.Server.Credentials.release
-  let make_insecure = F.Server.Credentials.create_insecure
+  include T.Server.Credentials
+  include F.Server.Credentials
 end
 
 module Request_call_stack = struct
   type t
 
   let t : t structure typ = Ctypes.structure "grpc_ocaml_request_call_stack"
-  let call = Ctypes.field t "cal" @@ T.Call.t
-  let call_details = Ctypes.field t "call_details" @@ ptr T.Call_details.t
-  let metadata = Ctypes.field t "metadata" @@ ptr T.Metadata.Array.t
+  let call = Ctypes.field t "cal" @@ Call.t
+  let call_details = Ctypes.field t "call_details" @@ ptr Call.Details.t
+  let metadata = Ctypes.field t "metadata" @@ ptr Metadata.raw
   let () = seal t
 
   let destroy t =
@@ -52,10 +50,14 @@ module Rpc = struct
   type t =
     { host : string
     ; methd : string
-    ; deadline : T.Timespec.t structure
-    ; metadata : T.Metadata.Array.t structure ptr
+    ; deadline : Timespec.t
+    ; metadata : Metadata.raw structure ptr
     ; call : Call.t
     }
+
+  let make ~host ~methd ~deadline ~metadata ~call =
+    { host; methd; deadline; metadata; call }
+  ;;
 
   let destroy { call; metadata; _ } =
     Call.destroy call;
@@ -101,12 +103,11 @@ type state =
 
 type t =
   { server : M.t
-  ; cq : T.Completion.Queue.t
+  ; cq : Completion_queue.raw
   ; mutable state : state
   ; context : Context.t
   ; handlers : handlers
   ; middlewares : Middlewares.t
-  ; lock : Lwt_mutex.t
   }
 
 let is_running t = t.state = `Running
@@ -131,7 +132,6 @@ let make args middlewares =
   ; handlers = Hashtbl.create default_service_handler_size
   ; context = Context.empty
   ; middlewares
-  ; lock = Lwt_mutex.create ()
   }
 ;;
 
@@ -147,8 +147,8 @@ let request_call t =
   let () = M.assert_exists t.server in
   let err = M.request_call t.server call call_details metadata cq t.cq tag in
   let () =
-    if err <> T.Call.Error.OK
-    then failwith (Printf.sprintf "prepare call error(%s)" @@ T.Call.Error.show err)
+    if err <> Call.Error.OK
+    then failwith (Printf.sprintf "prepare call error(%s)" @@ Call.Error.show err)
   in
   let inf = Timespec.(inf_future Clock_type.realtime) in
   let ev = Completion_queue.pluck t.cq inf tag in
@@ -156,19 +156,19 @@ let request_call t =
     if not @@ Event.is_success ev
     then (
       let st = Event.type_of ev in
-      failwith (Printf.sprintf "request_call failed(%s)" @@ T.Completion.Type.show st))
+      failwith (Printf.sprintf "request_call failed(%s)" @@ Completion_queue.Type.show st))
     (* else Lwt_result.return () *)
   in
   let deadline =
     Timespec.Clock_type.convert
-      !@(call_details |-> T.Call_details.deadline)
+      (call_details |->* Call.Details.deadline)
       Timespec.Clock_type.realtime
   in
-  let methd = Slice.to_string !@(call_details |-> T.Call_details.methd) in
-  let host = Slice.to_string !@(call_details |-> T.Call_details.host) in
+  let methd = Slice.to_string (call_details |->* Call.Details.methd) in
+  let host = Slice.to_string (call_details |->* Call.Details.host) in
   let call = Call.wrap_raw ~flags:Unsigned.UInt32.zero ~cq ~call:!@call () in
   Request_call_stack.destroy stack;
-  Rpc.{ methd; host; deadline; metadata; call }
+  Rpc.make ~methd ~host ~deadline ~metadata ~call
 ;;
 
 let shutdown t =
@@ -176,36 +176,30 @@ let shutdown t =
   then Lwt.return_unit
   else (
     t.state <- `Stopped;
-    Lwt_mutex.unlock t.lock;
-    if M.is_null t.server
-    then Lwt.return_unit
-    else
-      Lwt_mutex.with_lock t.lock
-      @@ fun () ->
-      M.shutdown_and_notify t.server t.cq null;
-      M.cancel_all_calls t.server;
-      (* wait all ops are cancelled *)
-      let ev = Completion_queue.pluck t.cq Timespec.inf_future' null in
-      let typ = Event.type_of ev in
-      if typ <> T.Completion.Type.OP_COMPLETE
-      then
-        Log.message __FILE__ __LINE__ `Info
-        @@ Printf.sprintf "bad shutdown_and_notify result: %s"
-        @@ T.Completion.Type.show typ;
-      M.destroy t.server;
-      Lwt.return_unit)
+    if not (M.is_null t.server) then M.shutdown_and_notify t.server t.cq null;
+    M.cancel_all_calls t.server;
+    (* wait all ops are cancelled *)
+    let ev = Completion_queue.pluck t.cq Timespec.inf_future' null in
+    let typ = Event.type_of ev in
+    if typ <> Completion_queue.Type.OP_COMPLETE
+    then
+      Log.message __FILE__ __LINE__ `Info
+      @@ Printf.sprintf "bad shutdown_and_notify result: %s"
+      @@ Completion_queue.Type.show typ;
+    M.destroy t.server;
+    Lwt.return_unit)
 ;;
 
 (** add address to listen. It can be called multiple times before start the server
    @param creds TODO: ccheck proper credentials *)
-let add_host ~host ~port ?(creds = Credentials.make_insecure ()) t =
+let add_host ~host ~port ?(creds = Credentials.create_insecure ()) t =
   let () =
     M.assert_exists t.server;
     assert_not_running t
   in
   let addr = Printf.sprintf "%s:%d" host port in
   let recvd_port = M.add_http2_port t.server addr creds in
-  let _ = Credentials.free creds in
+  let () = Credentials.release creds in
   if recvd_port = 0
   then failwith @@ Printf.sprintf "failed to add address to server %s" addr
 ;;
@@ -237,12 +231,12 @@ let dispatch t Rpc.{ methd; host; metadata; call; deadline } =
   match Hashtbl.find_opt t.handlers methd with
   | None -> Lwt.return @@ Call.unary_response ~code:`UNIMPLEMENTED call None
   | Some handler ->
-    Log.message __FILE__ __LINE__ `Debug @@ Printf.sprintf "handler found in %s" methd;
-    (* TODO: get metadata from request *)
-    let req, md = Call.remote_read call false in
+    Log.message __FILE__ __LINE__ `Debug
+    @@ Printf.sprintf "handler found { method=%s, host=%s }" methd host;
+    let req = Call.remote_read call in
     let metadata = Metadata.to_bwd metadata in
     let context =
-      t.middlewares t.context md req
+      t.middlewares t.context metadata req
       |> Context.(add target methd)
       |> Context.(add host) host
     in
@@ -260,7 +254,7 @@ let dispatch t Rpc.{ methd; host; metadata; call; deadline } =
                    code, details, metadata)
             @@ unmarshal req
           in
-          handler context md umreq
+          handler context metadata umreq
         in
         (match res with
         | Ok (res, md) ->
@@ -303,10 +297,10 @@ module Scheduler = struct
   ;;
 
   let scheudule fn =
+    let%lwt () = wait () in
     let () =
       Lwt.async
       @@ fun () ->
-      let%lwt () = wait () in
       let%lwt () = Running_count.incr () in
       Lwt.finalize fn Running_count.decr
     in
@@ -324,19 +318,18 @@ let start t =
   t.state <- `Running;
   let rec go () =
     if t.state <> `Running
-    then (
-      Lwt_mutex.unlock t.lock;
-      Lwt.return_unit)
+    then Lwt.return_unit
     else (
       let%lwt rio =
         Lwt_result.map_error Printexc.to_string
         @@ Lwt_result.catch
         @@ let%lwt rpc = Lwt_preemptive.detach request_call t in
-           Scheduler.scheudule @@ fun () -> dispatch t rpc >|= fun _ -> Rpc.destroy rpc
+           Lwt.finalize (fun () -> Scheduler.scheudule @@ fun () -> dispatch t rpc)
+           @@ fun () -> Lwt.return @@ Rpc.destroy rpc
       in
       if t.state = `Running
       then Result.iter_error (Log.message __FILE__ __LINE__ `Error) rio;
       go ())
   in
-  Lwt_mutex.with_lock t.lock go
+  go ()
 ;;

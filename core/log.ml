@@ -22,10 +22,10 @@ let severity_of_log_level = function
   | INFO -> `Info
 ;;
 
-let init =
-  let it = lazy (F.Log.init ()) in
-  fun () -> Lazy.force it
-;;
+(* let init = *)
+(* let it = lazy (F.Log.init ()) in *)
+(* fun () -> Lazy.force it *)
+(* ;; *)
 
 let should_log log_level =
   let severity = log_level_of_severity log_level in

@@ -31,11 +31,6 @@ let nsec_of_int = Int32.of_int
 let int_of_sec = Int64.to_int
 let int_of_nsec = Int32.to_int
 
-let init =
-  let it = lazy (F.Timespec.init ()) in
-  fun () -> Lazy.force it
-;;
-
 let make ?(sec = 0) ?(nsec = 0) () =
   let () = if sec < 0 || nsec < 0 then failwith "time must be positive" in
   let sec = sec_of_int sec in

@@ -24,10 +24,15 @@ let server host port =
     Grpc_server.Handler.(
       let open Grpc_basic.Syntax in
       Unary.add EchoService.greet'
-      @@ fun ctx _ message ->
+      @@ fun ctx headers message ->
       let request_id = Grpc_server.Context.get Ctx.request_id ctx in
+      let a = Grpc_basic.Headers.get "x-foo" headers in
+      let@ () =
+        Logs_lwt.debug (fun m -> m "x-foo: %s" (Option.value ~default:"<empty>" a))
+      in
       let@ () = Logs_lwt.debug (fun m -> m "request-id: %s" request_id) in
-      (* let@ () = Lwt_unix.sleep 0.1 in *)
+      (* let metadata = [ "x-response", "ok" ] in *)
+      (* let@ () = Lwt_unix.sleep 2. in *)
       ok' message)
   in
   Grpc_server.make_insecure ~host ~port ~middlewares handlers

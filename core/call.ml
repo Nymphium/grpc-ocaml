@@ -1,22 +1,19 @@
 open Import
+include T.Call
 
-open struct
-  module M = T.Call
-end
+type raw = t
+
+let raw = t
 
 module Batch_stack = struct
   type t
 
   let t : t structure typ = Ctypes.structure "grpc_ocaml_run_batch_stack"
-
-  let recv_initial_metadata =
-    Ctypes.field t "recv_initial_metadata" @@ ptr T.Metadata.Array.t
-  ;;
-
-  let recv_message = Ctypes.field t "recv_message" @@ ptr (ptr T.Byte_buffer.t)
-  let status = Ctypes.field t "recv_status" @@ ptr T.Status_code.t
-  let tr = Ctypes.field t "tr" @@ ptr T.Metadata.Array.t
-  let details = Ctypes.field t "details" @@ ptr T.Slice.t
+  let recv_initial_metadata = Ctypes.field t "recv_initial_metadata" @@ ptr Metadata.raw
+  let recv_message = Ctypes.field t "recv_message" @@ ptr (ptr Byte_buffer.raw)
+  let status = Ctypes.field t "recv_status" @@ ptr Status.Code.t
+  let tr = Ctypes.field t "tr" @@ ptr Metadata.raw
+  let details = Ctypes.field t "details" @@ ptr Slice.t
   let error_message = Ctypes.field t "error_message" @@ ptr Ctypes.string
   let cancelled = Ctypes.field t "cancelled" @@ ptr int
   let () = seal t
@@ -30,12 +27,14 @@ module Batch_stack = struct
 end
 
 module Details = struct
+  include T.Call_details
+
   let init = F.Call.Details.init
 
   let allocate () =
-    let ptr = malloc ~finalise:F.Call.Details.destroy T.Call_details.t in
-    init ptr;
-    ptr
+    let t = malloc t in
+    init t;
+    t
   ;;
 
   let destroy = F.Call.Details.destroy
@@ -43,8 +42,8 @@ end
 
 (** wrapped call data *)
 type t =
-  { call : M.t
-  ; cq : T.Completion.Queue.t
+  { call : raw
+  ; cq : Completion_queue.raw
   ; flags : T.Flags.Write.t
   }
 
@@ -53,14 +52,13 @@ type write_flag =
   | `No_compress
   ]
 
-let wrap_raw ?(flags = Propagation_bits.defaults) ~cq ~call () = { call; cq; flags }
-
 let destroy { call; cq; _ } =
-  F.Completion_queue.destroy cq;
-  F.Call.unref call
+  F.Call.unref call;
+  F.Completion_queue.destroy cq
 ;;
 
-let allocate () = malloc M.t
+let wrap_raw ?(flags = Propagation_bits.defaults) ~cq ~call () = { call; cq; flags }
+let allocate () = malloc t
 
 (** make call to ["${host}/${method}"], which [host] is [get_target channel] by default.
     If [parent] is not empty, the call is a child call of [parent].
@@ -106,8 +104,6 @@ let make
       @@ Printf.sprintf "cannot create call with method %s"
       @@ Slice.to_string methd_slice
   in
-  let () = Slice.unref methd_slice in
-  let () = Slice.unref host_slice in
   wrap_raw ~cq ~call ~flags ()
 ;;
 
@@ -123,24 +119,24 @@ let run_batch ?(tag = Ctypes.null) t ops =
   in
   let err = F.Call.start_batch t.call ops ops_size' tag __reserved__ in
   let () =
-    if err <> M.Error.OK
-    then failwith @@ Printf.sprintf "prepare call error(%s)" @@ M.Error.show err
+    if err <> Error.OK
+    then failwith @@ Printf.sprintf "prepare call error(%s)" @@ Error.show err
   in
   let inf = Timespec.(inf_future Clock_type.realtime) in
   let ev = Completion_queue.pluck t.cq inf tag in
   if ev @.* T.Event.success < 1
   then (
     let st = ev @.* T.Event.typ in
-    failwith @@ Printf.sprintf "run_batch failed(%s)" @@ T.Completion.Type.show st)
+    failwith @@ Printf.sprintf "run_batch failed(%s)" @@ Completion_queue.Type.show st)
   else ops, ops_size
 ;;
 
 let unary_request ?(metadata = []) ?message t =
-  let (`Recv_initial_metadata recv_initial_metadata as rim) =
+  let (`Recv_initial_metadata recv_initial_metadata' as rim) =
     Op.make_ref_initial_metadata ()
   in
-  let (`Recv_message recv_message as rm) = Op.make_ref_recv_message () in
-  let (`Recv_status_on_client recv_status_on_client as rsoc) =
+  let (`Recv_message recv_message' as rm) = Op.make_ref_recv_message () in
+  let (`Recv_status_on_client recv_status_on_client' as rsoc) =
     Op.make_ref_recv_status_on_client ()
   in
   let ops =
@@ -155,45 +151,53 @@ let unary_request ?(metadata = []) ?message t =
     add_msg it
   in
   let stack, tag = Batch_stack.make_tag_pair () in
-  stack |-> Batch_stack.recv_message <-@ recv_message.message;
-  stack |-> Batch_stack.recv_initial_metadata <-@ recv_initial_metadata.metadata;
-  stack |-> Batch_stack.status <-@ recv_status_on_client.status;
-  stack |-> Batch_stack.details <-@ recv_status_on_client.details;
-  stack |-> Batch_stack.error_message <-@ recv_status_on_client.error_message;
-  stack |-> Batch_stack.tr <-@ recv_status_on_client.metadata;
-  let _o = run_batch ~tag t ops in
-  let status = !@(recv_status_on_client.status) in
+  Batch_stack.(
+    stack |-> recv_message <-@ recv_message'.message;
+    stack |-> recv_initial_metadata <-@ recv_initial_metadata'.metadata;
+    stack |-> status <-@ recv_status_on_client'.status;
+    stack |-> details <-@ recv_status_on_client'.details;
+    stack |-> error_message <-@ recv_status_on_client'.error_message;
+    stack |-> tr <-@ recv_status_on_client'.metadata);
+  let ops, len = run_batch ~tag t ops in
+  let status = !@(recv_status_on_client'.status) in
   let md =
-    let init_md = Metadata.to_bwd recv_initial_metadata.metadata in
-    let md = Metadata.to_bwd recv_status_on_client.metadata in
+    let init_md = Metadata.to_bwd recv_initial_metadata'.metadata in
+    let md = Metadata.to_bwd recv_status_on_client'.metadata in
     md @ init_md
   in
   let status = Status.Code.to_bwd status in
   match status with
   | `OK ->
-    let recv_message = Byte_buffer.to_string_opt !@(recv_message.message) in
+    let recv_message = Byte_buffer.to_string_opt !@(recv_message'.message) in
+    let () =
+      Batch_stack.destroy stack;
+      Op.destroy ops len
+    in
     Ok (recv_message, md)
   | #Status.Code.fail_bwd as status ->
     let details =
-      let slice = !@(recv_status_on_client.details) in
-      if is_null @@ Slice.start_ptr slice then None else Some (Slice.to_string slice)
+      let slice = !@(recv_status_on_client'.details) in
+      if Slice.is_empty slice then None else Some (Slice.to_string slice)
+    in
+    let () =
+      Batch_stack.destroy stack;
+      Op.destroy ops len
     in
     Error (status, details, md)
 ;;
 
-let remote_read t is_metadata_received =
+let remote_read t =
   let (`Recv_message recv_message as rm) = Op.make_ref_recv_message () in
-  let (`Recv_initial_metadata recv_initial_metadata as rim) =
-    Op.make_ref_initial_metadata ()
-  in
-  let ops = if is_metadata_received then [ rm; rim ] else [ rm ] in
+  let ops = [ rm ] in
   let stack, tag = Batch_stack.make_tag_pair () in
   stack |-> Batch_stack.recv_message <-@ recv_message.message;
-  stack |-> Batch_stack.recv_initial_metadata <-@ recv_initial_metadata.metadata;
-  let _ = run_batch ~tag t ops in
-  let () = Batch_stack.destroy stack in
-  let md = Metadata.to_bwd recv_initial_metadata.metadata in
-  Byte_buffer.to_string_opt !@(recv_message.message), md
+  let ops, len = run_batch ~tag t ops in
+  let message = Byte_buffer.to_string_opt !@(recv_message.message) in
+  let () =
+    Batch_stack.destroy stack;
+    Op.destroy ops len
+  in
+  message
 ;;
 
 (** send unary response: run RECV_CLOSE_ON_SERVER, SEND_INITIAL_METADATA and SEND_STATUS_FROM_SERVER ops *)
@@ -214,12 +218,14 @@ let unary_response ?(code = `OK) ?details ?(md = []) ?(tr = []) t res =
       ; rcos
       ]
   in
-  let stack = malloc Batch_stack.t in
-  let tag = Ctypes.to_voidp @@ stack in
+  let stack, tag = Batch_stack.make_tag_pair () in
   stack |-> Batch_stack.cancelled <-@ recv_close_on_server.cancelled;
-  let _ = run_batch ~tag t ops in
-  let () = Batch_stack.destroy stack in
+  let ops, len = run_batch ~tag t ops in
   let closed_on_server = deref @@ recv_close_on_server.cancelled in
+  let () =
+    Batch_stack.destroy stack;
+    Op.destroy ops len
+  in
   if closed_on_server <= 0
   then Log.message __FILE__ __LINE__ `Info "not (properly) closed request by server"
 ;;

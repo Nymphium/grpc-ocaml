@@ -317,7 +317,9 @@ module Types (F : Ctypes.TYPE) = struct
     let () = seal t
 
     module Array = struct
-      let md = t
+      open struct
+        let md = t
+      end
 
       include Anon_struct (struct
         let name = "grpc_metadata_array"

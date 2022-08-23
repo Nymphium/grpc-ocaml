@@ -42,9 +42,7 @@ let make ~host ~port ?credentials ?(args = []) () =
       Option.(value ~default:id @@ map (fun id -> Headers.add "request_id" id) request_id)
     in
     fun ?(metadata = []) req ->
-      ignore timeout;
-      (* TODO: correctly send metadata *)
-      (* let metadata = Headers.(metadata |> Timeout.set_second timeout) |> set_request_id in *)
+      let metadata = Headers.(metadata |> Timeout.set_second timeout) |> set_request_id in
       let body = PB.Writer.contents @@ decoder req in
       let call = Call.make ~channel ~methd:path () in
       Lwt.return @@ Call.unary_request call ~metadata ~message:body

@@ -7,7 +7,7 @@ let client =
 
 let send_greet client =
   let req = EchoService.Greet.Request.make ~message:"hello" () in
-  client.Grpc_client.unary EchoService.greet' req
+  client.Grpc_client.unary EchoService.greet' ~timeout:1 req
 ;;
 
 let () =
@@ -16,9 +16,9 @@ let () =
   let open Lwt.Syntax in
   (* let* _res = send_greet client in *)
   let* res = send_greet client in
-  let _res = send_greet client in
-  let _res = send_greet client in
-  let _res = send_greet client in
+  (* let _res = send_greet client in *)
+  (* let _res = send_greet client in *)
+  (* let _res = send_greet client in *)
   match res with
   | Ok (msg, _) ->
     let* () = Logs_lwt.debug (fun m -> m "response: %s" msg) in
