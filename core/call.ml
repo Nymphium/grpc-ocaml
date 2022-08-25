@@ -78,14 +78,14 @@ let make
     | Some f -> Unsigned.UInt32.of_int f
     | None -> Unsigned.UInt32.zero
   in
-  let host_slice = Slice.from_static_string host in
+  let host_slice = Slice.from_string host in
   let parent_call =
     match parent with
     | None -> to_voidp null
     | Some parent -> parent.call
   in
   let cq = Completion_queue.create_for_pluck () in
-  let methd_slice = Slice.from_static_string methd in
+  let methd_slice = Slice.from_string methd in
   let call =
     F.Channel.create_call
       channel.channel

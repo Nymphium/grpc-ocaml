@@ -39,14 +39,18 @@ let allocate ?(size = 0) ?(count = 0) () =
 
 open struct
   let fwd1 ~k ~v =
-    let k' = Slice.from_string k in
-    let key_is_valid = 0 < F.Header.key_is_legal k' in
-    let () = if not key_is_valid then failwith @@ Printf.sprintf "invalid key: %s" k in
-    let v' = Slice.from_string v in
-    let value_is_valid = 0 < F.Header.nonbin_value_is_legal v' in
-    let () =
-      if not value_is_valid then failwith @@ Printf.sprintf "invalid value: %s" v
-    in
+    let k' = Slice.from_string ~copy:true k in
+    (* let key_is_valid = 0 < F.Header.key_is_legal k' in *)
+    (* let () = *)
+    (* if not key_is_valid then Slice.unref k'; *)
+    (* failwith @@ Printf.sprintf "invalid key: %s" k *)
+    (* in *)
+    let v' = Slice.from_string ~copy:true v in
+    (* let value_is_valid = 0 < F.Header.nonbin_value_is_legal v' in *)
+    (* let () = *)
+    (* if not value_is_valid then Slice.unref v'; *)
+    (* failwith @@ Printf.sprintf "invalid value: %s" v *)
+    (* in *)
     let vl = Ctypes.make elem in
     let () =
       vl @. key <-@ k';

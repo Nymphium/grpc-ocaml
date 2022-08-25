@@ -1,11 +1,11 @@
 (test
  (name test)
  (deps node_modules index.js package.json yarn.lock)
- (libraries lwt.unix grpc_client))
+ (libraries lwt.unix proto grpc_client))
 
 (copy_files
  (alias runtest)
- (files ../../test/proto.proto))
+ (files ../../misc/proto.proto))
 
 (rule
  (alias runtest)
@@ -15,10 +15,3 @@
  (action
   (bash "tar xf %{tgz}")))
 
-(rule
- (alias runtest)
- (target proto.ml)
- (deps
-  (:proto proto.proto))
- (action
-  (bash "protoc --ocaml_out=. -I . %{proto}")))

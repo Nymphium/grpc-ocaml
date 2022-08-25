@@ -259,10 +259,10 @@ let dispatch t Rpc.{ methd; host; metadata; call; deadline } =
         (match res with
         | Ok (res, md) ->
           let res = marshal res in
-          Lwt.return @@ Call.unary_response call ~md (Some res)
+          Lwt.return @@ Call.unary_response call ~tr:md (Some res)
         | Error (code, details, md) ->
           let code = (code :> Status.Code.bwd) in
-          Lwt.return @@ Call.unary_response call ~code ~md ?details None))
+          Lwt.return @@ Call.unary_response call ~code ~tr:md ?details None))
 ;;
 
 (** schedules handling process *)

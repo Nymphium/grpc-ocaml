@@ -1,0 +1,7 @@
+(executable
+ (name main)
+ (libraries grpc.server context handler middlewares logs.fmt fmt.tty))
+
+(copy_files
+  (files ../settings.ml))
+

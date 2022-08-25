@@ -1,7 +1,9 @@
 module EchoService = Proto.Grpc_test.Echo
 
+let client = Grpc_client.make ~host:"loopback.ja-sore.de" ~port:50051 ()
+let _unit = client.unary EchoService.unit' ()
+
 let greet () =
-  let client = Grpc_client.make ~host:"loopback.ja-sore.de" ~port:50051 () in
   let req = EchoService.Greet.Request.make ~message:"hello" () in
   client.unary EchoService.greet' req
 ;;
@@ -9,10 +11,11 @@ let greet () =
 let () =
   Lwt_main.run
   @@
-  let () =
+  let open Lwt.Syntax in
+  let* () =
     let p = Lwt_process.(shell "yarn --offline node index.js" |> new process_none) in
     Lwt_main.at_exit (fun () -> Lwt.return @@ p#kill 9);
-    Unix.sleep 2
+    Lwt_unix.sleep 2.
   in
   greet ()
   |> Fun.flip Lwt.bind

@@ -1,0 +1,16 @@
+(executable
+ (name main)
+ (libraries grpc.client logs.fmt fmt.tty))
+
+(copy_files
+ (files %{project_root}/misc/proto.proto))
+
+(copy_files
+  (files ../settings.ml))
+
+(rule
+ (target proto.ml)
+ (deps
+  (:proto proto.proto))
+ (action
+  (bash "protoc --ocaml_out=. -I . %{proto}")))

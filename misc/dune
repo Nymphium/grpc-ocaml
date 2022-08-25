@@ -1,0 +1,12 @@
+(library
+  (name proto)
+  (modules proto)
+  (libraries ocaml-protoc-plugin)
+  )
+
+(rule
+ (target proto.ml)
+ (deps
+  (:proto proto.proto))
+ (action
+  (bash "protoc --ocaml_out=. -I . %{proto}")))

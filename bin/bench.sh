@@ -8,7 +8,7 @@ if [ "${DEBUG}" ]; then
   DEBUG="--debug=/dev/stdout"
 fi
 
-proto="test/proto.proto"
+proto="misc/proto.proto"
 service="grpc_test.Echo"
 rpc="Greet"
 

@@ -10,8 +10,13 @@ const Greet = (call, callback) => {
   callback(null, { message: `${call.request.message}` });
 }
 
+const Unit = (call, callback) => {
+  console.log(`received message: ${JSON.stringify(call.request)}`);
+  callback(null, {});
+}
+
 const server = new grpc.Server();
-server.addService(proto.grpc_test.Echo.service, { Greet });
+server.addService(proto.grpc_test.Echo.service, { Greet, Unit });
 
 function run(host, port) {
 

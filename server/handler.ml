@@ -40,18 +40,14 @@ Unary.add rpc @@ fun ctx req md ->
     fun handler t ->
       let handler' ctx md raw =
         let req_time = Unix.gettimeofday () in
-        let () =
-          Lwt.async
-          @@ fun () ->
+        let%lwt () =
           Logs_lwt.debug ~src:Log.default
           @@ fun m ->
           let tags = default_tags ctx |> Log.Tag.upstream_header md in
           m ~tags ~header:Log.header "get request on %s" methd
         in
         let%lwt res = handler ctx md raw in
-        let () =
-          Lwt.async
-          @@ fun () ->
+        let%lwt () =
           Logs_lwt.debug ~src:Log.default
           @@ fun m ->
           let diff = Unix.gettimeofday () -. req_time in

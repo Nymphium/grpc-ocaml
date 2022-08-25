@@ -4,7 +4,7 @@
 
 (copy_files
  (alias runtest)
- (files ../../test/proto.proto))
+ (files ../../misc/proto.proto))
 
 (rule
  (alias runtest)
