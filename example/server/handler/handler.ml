@@ -11,8 +11,9 @@ let h t =
              Logs_lwt.debug (fun m -> m "x-foo: %s" (Option.value ~default:"<empty>" a))
            in
            let@ () = Logs_lwt.debug (fun m -> m "request-id: %s" request_id) in
+           (* let@ () = Lwt_unix.sleep 1. in *)
            (* let metadata = [ "x-response", "ok" ] in *)
-           (* let@ () = Lwt_unix.sleep 2. in *)
+           let@ () = Lwt_io.printlf "%d" @@ Grpc_server.Context.get Context.counter ctx in
            ok' message)
     |> Unary.add EchoService.unit' (fun _ _ _ -> ok' ()))
 ;;

@@ -265,49 +265,6 @@ let dispatch t Rpc.{ methd; host; metadata; call; deadline } =
           Lwt.return @@ Call.unary_response call ~code ~tr:md ?details None))
 ;;
 
-(** schedules handling process *)
-module Scheduler = struct
-  (** handling processes can be run simultaneously up to *)
-  let max_running = 20
-
-  module Running_count = struct
-    let t = Lwt_mvar.create 0
-
-    let map f =
-      let%lwt v = Lwt_mvar.take t in
-      f v
-    ;;
-
-    let modify f = map @@ fun v -> Lwt_mvar.put t (f v)
-    let incr () = modify (( + ) 1)
-    let decr () = modify (flip ( - ) 1)
-  end
-
-  let tic =
-    match !Completion_queue.tic with
-    | `Millis millis -> Int64.to_float millis /. 1000.
-    | `Seconds secs -> Int64.to_float secs
-  ;;
-
-  let[@tail_cons_mod] rec wait () =
-    Running_count.map
-    @@ fun running_count ->
-    let%lwt () = Lwt_mvar.put Running_count.t running_count in
-    if running_count > max_running then Lwt_unix.sleep tic >>= wait else Lwt.return_unit
-  ;;
-
-  let scheudule fn =
-    let%lwt () = wait () in
-    let () =
-      Lwt.async
-      @@ fun () ->
-      let%lwt () = Running_count.incr () in
-      Lwt.finalize fn Running_count.decr
-    in
-    Lwt.return_unit
-  ;;
-end
-
 (** start a server and run loop *)
 let start t =
   let () =
@@ -324,8 +281,8 @@ let start t =
         Lwt_result.map_error Printexc.to_string
         @@ Lwt_result.catch
         @@ let%lwt rpc = Lwt_preemptive.detach request_call t in
-           Lwt.finalize (fun () -> Scheduler.scheudule @@ fun () -> dispatch t rpc)
-           @@ fun () -> Lwt.return @@ Rpc.destroy rpc
+           let () = Lwt.on_termination (dispatch t rpc) @@ fun () -> Rpc.destroy rpc in
+           Lwt.return_unit
       in
       if t.state = `Running
       then Result.iter_error (Log.message __FILE__ __LINE__ `Error) rio;
