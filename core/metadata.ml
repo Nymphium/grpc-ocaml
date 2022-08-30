@@ -38,19 +38,23 @@ let allocate ?(size = 0) ?(count = 0) () =
 ;;
 
 open struct
-  let fwd1 ~k ~v =
+  let fwd1 (k, v) =
     let k' = Slice.from_string ~copy:true k in
-    (* let key_is_valid = 0 < F.Header.key_is_legal k' in *)
-    (* let () = *)
-    (* if not key_is_valid then Slice.unref k'; *)
-    (* failwith @@ Printf.sprintf "invalid key: %s" k *)
-    (* in *)
+    let key_is_valid = F.Header.key_is_legal k' > 0 in
+    let () =
+      if not key_is_valid
+      then (
+        Slice.unref k';
+        failwith @@ Printf.sprintf "invalid key: %s" k)
+    in
     let v' = Slice.from_string ~copy:true v in
-    (* let value_is_valid = 0 < F.Header.nonbin_value_is_legal v' in *)
-    (* let () = *)
-    (* if not value_is_valid then Slice.unref v'; *)
-    (* failwith @@ Printf.sprintf "invalid value: %s" v *)
-    (* in *)
+    let value_is_valid = F.Header.nonbin_value_is_legal v' > 0 in
+    let () =
+      if not value_is_valid
+      then (
+        Slice.unref v';
+        failwith @@ Printf.sprintf "invalid value: %s" v)
+    in
     let vl = Ctypes.make elem in
     let () =
       vl @. key <-@ k';
@@ -70,7 +74,7 @@ let make bwd =
   let len = List.length bwd in
   let arr = allocate ~size:len ~count:len () in
   bwd
-  |> List.map (fun (k, v) -> fwd1 ~k ~v)
+  |> List.map fwd1
   |> fun l ->
   let md = CArray.(of_list elem l |> start) in
   arr |-> metadata <-@ md;

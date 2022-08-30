@@ -6,9 +6,9 @@ let handler =
   let module EchoService = Proto.Grpc_test.Echo in
   Grpc_server.Handler.(
     Unary.add EchoService.greet'
-    @@ fun ctx _headers message ->
+    @@ fun context _metadata _call message ->
     let open Grpc_basic.Syntax in
-    let request_id = Grpc_server.Context.get Ctx.request_id ctx in
+    let request_id = Grpc_server.Context.get Ctx.request_id context in
     let@ () = Logs_lwt.debug @@ fun m -> m "%s" request_id in
     ok' message)
 ;;

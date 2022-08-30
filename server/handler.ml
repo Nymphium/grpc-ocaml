@@ -38,20 +38,20 @@ Unary.add rpc @@ fun ctx req md ->
     let encode base = Ocaml_protoc_plugin.Writer.contents @@ encode base in
     let methd = R.name' () in
     fun handler t ->
-      let handler' ctx md raw =
+      let handler' context metadata call request =
         let req_time = Unix.gettimeofday () in
         let%lwt () =
           Logs_lwt.debug ~src:Log.default
           @@ fun m ->
-          let tags = default_tags ctx |> Log.Tag.upstream_header md in
+          let tags = default_tags context |> Log.Tag.upstream_header metadata in
           m ~tags ~header:Log.header "get request on %s" methd
         in
-        let%lwt res = handler ctx md raw in
+        let%lwt res = handler context metadata call request in
         let%lwt () =
           Logs_lwt.debug ~src:Log.default
           @@ fun m ->
           let diff = Unix.gettimeofday () -. req_time in
-          let tags = default_tags ctx |> Log.Tag.float ~name:"duration" diff in
+          let tags = default_tags context |> Log.Tag.float ~name:"duration" diff in
           m ~tags ~header:Log.header "send response in %f sec" diff
         in
         Lwt.return res

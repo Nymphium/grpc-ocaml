@@ -8,7 +8,7 @@ and fail = Status.Code.fail_bwd fail'
 type 'a comp = ('a, fail) result
 and 'res res = 'res ok comp
 
-type ('bwd, 'fwd) handler = Context.t -> Metadata.bwd -> 'bwd -> 'fwd res Lwt.t
+type ('bwd, 'fwd) handler = Context.t -> Metadata.bwd -> Call.t -> 'bwd -> 'fwd res Lwt.t
 
 (** string as HTTP request/response body *)
 type base = string
