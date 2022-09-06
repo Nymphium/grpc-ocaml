@@ -234,6 +234,7 @@ let dispatch t Rpc.{ methd; host; metadata; call; deadline } =
     Log.message __FILE__ __LINE__ `Debug
     @@ Printf.sprintf "handler found { method=%s, host=%s }" methd host;
     let req = Call.remote_read call in
+    let%lwt () = Lwt.pause () in
     let metadata = Metadata.to_bwd metadata in
     let context =
       t.middlewares t.context metadata req
@@ -254,16 +255,20 @@ let dispatch t Rpc.{ methd; host; metadata; call; deadline } =
                    code, details, metadata)
             @@ unmarshal req
           in
+          let%lwt () = Lwt.pause () in
           handler context metadata call umreq
         in
-        let%lwt () = Lwt.pause () in
         (match res with
         | Ok (res, md) ->
           let res = marshal res in
-          Lwt.return @@ Call.unary_response call ~md (Some res)
+          let () = Call.unary_response call ~md (Some res) in
+          Lwt.wakeup_paused ();
+          Lwt.return_unit
         | Error (code, details, md) ->
           let code = (code :> Status.Code.bwd) in
-          Lwt.return @@ Call.unary_response call ~code ~md ?details None))
+          let () = Call.unary_response call ~code ~md ?details None in
+          Lwt.wakeup_paused ();
+          Lwt.return_unit))
 ;;
 
 (** start a server and run loop *)
@@ -282,7 +287,13 @@ let start t =
         Lwt_result.map_error Printexc.to_string
         @@ Lwt_result.catch
         @@ let%lwt rpc = Lwt_preemptive.detach request_call t in
-           let () = Lwt.on_termination (dispatch t rpc) @@ fun () -> Rpc.destroy rpc in
+           let () =
+             Lwt.async
+             @@ fun () ->
+             let%lwt () = dispatch t rpc in
+             Rpc.destroy rpc;
+             Lwt.return_unit
+           in
            Lwt.return_unit
       in
       if t.state = `Running
