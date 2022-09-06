@@ -255,7 +255,6 @@ let dispatch t Rpc.{ methd; host; metadata; call; deadline } =
                    code, details, metadata)
             @@ unmarshal req
           in
-          let%lwt () = Lwt.pause () in
           handler context metadata call umreq
         in
         (match res with
