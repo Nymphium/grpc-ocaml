@@ -219,34 +219,25 @@ let exists_handler t ~methd = Hashtbl.mem t.handlers methd
 
 (** RPC handling dispatcher:
    receive a rpc, find its corresponding handler, add `host` and `target` to the context and exec handler *)
-let dispatch t Rpc.{ methd; host; metadata; call; deadline } =
-  Lwt.protected
-  @@ flip Lwt.catch (fun exn ->
-         let bt = Printexc.get_backtrace () in
-         let details = Printexc.to_string exn in
-         let msg = String.concat "\n" [ details; bt ] in
-         Log.message __FILE__ __LINE__ `Error msg;
-         Lwt.return @@ Call.unary_response call ~code:`INTERNAL ~details None)
-  @@ fun () ->
+let dispatch t (Rpc.{ methd; host; metadata; call; deadline } as rpc) =
   match Hashtbl.find_opt t.handlers methd with
-  | None -> Lwt.return @@ Call.unary_response ~code:`UNIMPLEMENTED call None
+  | None -> Call.unary_response ~code:`UNIMPLEMENTED call None
   | Some handler ->
     Log.message __FILE__ __LINE__ `Debug
     @@ Printf.sprintf "handler found { method=%s, host=%s }" methd host;
     let req = Call.remote_read call in
-    let%lwt () = Lwt.pause () in
     let metadata = Metadata.to_bwd metadata in
     let context =
       t.middlewares t.context metadata req
       |> Context.(add target methd)
       |> Context.(add host) host
     in
-    Call.with_timeout
-      call
-      deadline
-      (match handler with
-      | Unary { handler; marshal; unmarshal } ->
-        let%lwt res =
+    let io =
+      Call.with_timeout
+        call
+        deadline
+        (match handler with
+        | Unary { handler; marshal; unmarshal } ->
           let open Lwt_result.Syntax in
           let* umreq =
             let req = Option.value ~default:"" req in
@@ -255,19 +246,33 @@ let dispatch t Rpc.{ methd; host; metadata; call; deadline } =
                    code, details, metadata)
             @@ unmarshal req
           in
-          handler context metadata call umreq
-        in
-        (match res with
-        | Ok (res, md) ->
-          let res = marshal res in
-          let () = Call.unary_response call ~md (Some res) in
-          Lwt.wakeup_paused ();
-          Lwt.return_unit
-        | Error (code, details, md) ->
-          let code = (code :> Status.Code.bwd) in
-          let () = Call.unary_response call ~code ~md ?details None in
-          Lwt.wakeup_paused ();
-          Lwt.return_unit))
+          let* res, md = handler context metadata call umreq in
+          Lwt_result.return (marshal res, md))
+    in
+    let on_exn exn =
+      let bt = Printexc.get_backtrace () in
+      let details = Printexc.to_string exn in
+      let msg = String.concat "\n" [ details; bt ] in
+      Log.message __FILE__ __LINE__ `Error msg;
+      Call.unary_response call ~code:`INTERNAL ~details None
+    in
+    Lwt.on_any
+      io
+      (fun res ->
+        Fun.protect
+          ~finally:(fun () -> Rpc.destroy rpc)
+          (fun () ->
+            try
+              match res with
+              | Some (Ok (res, md)) -> Call.unary_response call ~md (Some res)
+              | Some (Error (code, details, md)) ->
+                let code = (code :> Status.Code.bwd) in
+                Call.unary_response call ~code ~md ?details None
+              (* deadline exceeded *)
+              | None -> ()
+            with
+            | exn -> on_exn exn))
+      on_exn
 ;;
 
 (** start a server and run loop *)
@@ -286,13 +291,7 @@ let start t =
         Lwt_result.map_error Printexc.to_string
         @@ Lwt_result.catch
         @@ let%lwt rpc = Lwt_preemptive.detach request_call t in
-           let () =
-             Lwt.async
-             @@ fun () ->
-             let%lwt () = dispatch t rpc in
-             Rpc.destroy rpc;
-             Lwt.return_unit
-           in
+           let () = dispatch t rpc in
            Lwt.return_unit
       in
       if t.state = `Running

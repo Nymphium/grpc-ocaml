@@ -230,26 +230,30 @@ let unary_response ?(code = `OK) ?details ?(md = []) ?(tr = []) t res =
   then Log.message __FILE__ __LINE__ `Info "not (properly) closed request by server"
 ;;
 
-(** return `DEADLINE_EXCEEDED` response to its call *)
+(** return [DEADLINE_EXCEEDED] response to its call *)
 let deadline_exceeded t = unary_response ~code:`DEADLINE_EXCEEDED t None
 
 (** exec io with deadline:
-  - if `deadline` is `inf_future'` then just wait until `io` is completed
-  - else if `deadline` is `inf_past'` then returns `DEADLINE_EXCEEDED` response
-  - otherwise wait `io` until `deadline` is exceeded
+  - return [Some a] when [io] is completed before [deadline] exceeded
+  - if [deadline] is [inf_future'] then just wait until [io] is completed
+  - else if [deadline] is [inf_past'] then returns [DEADLINE_EXCEEDED] response
+  - otherwise wait [io] until [deadline] is exceeded
   *)
 let with_timeout t deadline io =
   if Timespec.cmp deadline Timespec.inf_future' = 0
-  then io
+  then io >|= Option.some
   else if Timespec.cmp deadline Timespec.inf_past' = 0
-  then Lwt.return @@ deadline_exceeded t
+  then (
+    deadline_exceeded t;
+    Lwt.return_none)
   else
     Lwt.pick
       [ (let sec =
            Timespec.(to_micros @@ sub deadline (now Clock_type.realtime)) /. 1000_000.
          in
          let%lwt () = Lwt_unix.sleep sec in
-         Lwt.return @@ deadline_exceeded t)
-      ; io
+         deadline_exceeded t;
+         Lwt.return_none)
+      ; io >|= Option.some
       ]
 ;;
