@@ -14,11 +14,11 @@ let () =
   Lwt_main.run
   @@
   let open Lwt.Syntax in
-  (* let* _res = send_greet client in *)
   let* res = send_greet client in
-  (* let _res = send_greet client in *)
-  (* let _res = send_greet client in *)
-  (* let _res = send_greet client in *)
+  let* _res = send_greet client in
+  let* _res = send_greet client in
+  let* _res = send_greet client in
+  let* _res = send_greet client in
   match res with
   | Ok (msg, _) ->
     let* () = Logs_lwt.debug (fun m -> m "response: %s" msg) in

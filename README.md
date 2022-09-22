@@ -25,22 +25,35 @@ grpc-ocaml
 # Demo
 ```shell
 $ direnv allow
-$ dune exec example/server.exe &
-server.exe: [DEBUG] run gRPC echo server on localhost:20000 ...
-$ dune exec example/client.exe
-server.exe: [grpc.server] get request on /grpc_test.Echo/Greet
-server.exe: [DEBUG] request-id: request-id-is-9344
-server.exe: [grpc.server] send response in 0.000046 sec
-server.exe: [grpc.server] get request on /grpc_test.Echo/Greet
-server.exe: [DEBUG] request-id: request-id-is-26685
-server.exe: [grpc.server] send response in 0.000110 sec
-server.exe: [grpc.server] get request on /grpc_test.Echo/Greet
-server.exe: [DEBUG] request-id: request-id-is-30182
-server.exe: [grpc.server] send response in 0.000118 sec
-server.exe: [grpc.server] get request on /grpc_test.Echo/Greet
-server.exe: [DEBUG] request-id: request-id-is-31641
-server.exe: [grpc.server] send response in 0.043040 sec
-client.exe: [DEBUG] response: hello
+$ dune exec example/server/main.exe &
+main.exe: [DEBUG] run gRPC echo server on localhost:50051 ...
+$ dune exec example/client/main.exe
+main.exe: [grpc.server] get request on /grpc_test.Echo/Greet
+main.exe: [DEBUG] x-foo: <empty>
+main.exe: [DEBUG] request-id: request-id-is-9344
+main.exe: [grpc.server] send response in 0.000029 sec
+1
+main.exe: [grpc.server] get request on /grpc_test.Echo/Greet
+main.exe: [DEBUG] x-foo: <empty>
+main.exe: [DEBUG] request-id: request-id-is-26685
+main.exe: [grpc.server] send response in 0.000015 sec
+2
+main.exe: [grpc.server] get request on /grpc_test.Echo/Greet
+main.exe: [DEBUG] x-foo: <empty>
+main.exe: [DEBUG] request-id: request-id-is-30182
+main.exe: [grpc.server] send response in 0.000015 sec
+3
+main.exe: [grpc.server] get request on /grpc_test.Echo/Greet
+main.exe: [DEBUG] x-foo: <empty>
+main.exe: [DEBUG] request-id: request-id-is-31641
+main.exe: [grpc.server] send response in 0.000015 sec
+4
+main.exe: [grpc.server] get request on /grpc_test.Echo/Greet
+main.exe: [DEBUG] x-foo: <empty>
+main.exe: [DEBUG] request-id: request-id-is-30439
+main.exe: [grpc.server] send response in 0.000027 sec
+5
+main.exe: [DEBUG] response: hello
 ```
 
 # TODO
