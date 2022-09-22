@@ -31,14 +31,16 @@ let destroy_entries md len =
 let allocate ?(size = 0) ?(count = 0) () =
   let t = malloc Array.t in
   let () = init t in
+  let msize = Unsigned.Size_t.of_int (size * sizeof elem) in
   let size = Unsigned.Size_t.of_int size in
+  t |-> Array.metadata <-@ from_voidp elem @@ F.Alloc.zalloc msize;
   t |-> Array.capacity <-@ size;
   t |-> Array.count <-@ Unsigned.Size_t.of_int count;
   t
 ;;
 
 open struct
-  let fwd1 (k, v) =
+  let fwd1 (k, v) elem =
     let k' = Slice.from_string ~copy:true k in
     let key_is_valid = F.Header.key_is_legal k' > 0 in
     let () =
@@ -55,12 +57,8 @@ open struct
         Slice.unref v';
         failwith @@ Printf.sprintf "invalid value: %s" v)
     in
-    let vl = Ctypes.make elem in
-    let () =
-      vl @. key <-@ k';
-      vl @. value <-@ v'
-    in
-    vl
+    elem @. key <-@ k';
+    elem @. value <-@ v'
   ;;
 
   let bwd1 md =
@@ -73,11 +71,12 @@ end
 let make bwd =
   let len = List.length bwd in
   let arr = allocate ~size:len ~count:len () in
-  bwd
-  |> List.map fwd1
-  |> fun l ->
-  let md = CArray.(of_list elem l |> start) in
-  arr |-> metadata <-@ md;
+  let count = ref 0 in
+  CArray.from_ptr (arr |->* metadata) len
+  |> CArray.iter (fun elem ->
+         let kv = List.nth bwd !count in
+         fwd1 kv elem;
+         incr count);
   arr
 ;;
 

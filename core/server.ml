@@ -264,10 +264,10 @@ let dispatch t (Rpc.{ methd; host; metadata; call; deadline } as rpc) =
           (fun () ->
             try
               match res with
-              | Some (Ok (res, md)) -> Call.unary_response call ~md (Some res)
-              | Some (Error (code, details, md)) ->
+              | Some (Ok (res, tr)) -> Call.unary_response call ~tr (Some res)
+              | Some (Error (code, details, tr)) ->
                 let code = (code :> Status.Code.bwd) in
-                Call.unary_response call ~code ~md ?details None
+                Call.unary_response call ~code ~tr ?details None
               (* deadline exceeded *)
               | None -> ()
             with

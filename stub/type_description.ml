@@ -839,7 +839,7 @@ module Types (F : Ctypes.TYPE) = struct
         let trailing_metadata_count = "trailing_metadata_count" <-. size_t
         let trailing_metadata = "trailing_metadata" <-. ptr Metadata.t
         let status = "status" <-. Status_code.t
-        let status_details = "status_details" <-. ptr_opt Slice.t
+        let status_details = "status_details" <-. ptr Slice.t
         let () = seal t
       end
 
@@ -868,8 +868,8 @@ module Types (F : Ctypes.TYPE) = struct
 
         let trailing_metadata = "trailing_metadata" <-. ptr Metadata.Array.t
         let status = "status" <-. ptr Status_code.t
-        let status_details = "status_details" <-. ptr_opt Slice.t
-        let error_string = "error_string" <-. ptr_opt string
+        let status_details = "status_details" <-. ptr Slice.t
+        let error_string = "error_string" <-. ptr string
         let () = seal t
       end
 

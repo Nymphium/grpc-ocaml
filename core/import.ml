@@ -17,7 +17,8 @@ let[@inline] malloc ?finalise t =
   ptr
 ;;
 
-let[@inline] free t = F.Alloc.free @@ Ctypes.to_voidp t
+let[@inline] free v = F.Alloc.free @@ Ctypes.to_voidp v
+let[@inline] nullof t = Ctypes.from_voidp t Ctypes.null
 
 (** [NULL] *)
 let __reserved__ = Ctypes.null
