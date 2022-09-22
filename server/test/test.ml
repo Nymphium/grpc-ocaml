@@ -13,9 +13,9 @@ let handler =
     ok' message)
 ;;
 
-let middlewares =
+let interceptors =
   let open Grpc_server in
-  let open Middlewares in
+  let open Interceptors in
   empty
   |> add (fun ctx headers _data ->
          let request_id =
@@ -42,7 +42,7 @@ let () =
   Lwt_main.run
   @@
   let open Lwt.Syntax in
-  let server = Grpc_server.make_insecure ~host ~port ~middlewares handler in
+  let server = Grpc_server.make_insecure ~host ~port ~interceptors handler in
   let () =
     Lwt.(
       async

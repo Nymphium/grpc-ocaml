@@ -6,10 +6,10 @@ let make_insecure
     ~host
     ~port
     ?(args = [])
-    ?(middlewares = Grpc_core.Server.Middlewares.empty)
+    ?(interceptors = Grpc_core.Server.Interceptors.empty)
     handlers
   =
-  let t = Grpc_core.Server.make args middlewares in
+  let t = Grpc_core.Server.make args interceptors in
   add_host ~host ~port t;
   handlers t
 ;;

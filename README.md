@@ -9,8 +9,8 @@ grpc-ocaml
 - [ ] Server streaming RPC
 - [ ] Client streaming RPC
 - [ ] Bidirectional streaming RPC
-- [x] Context
-- [x] Middlewares
+- [x] Interceptors in server
+- [ ] Interceptors in client
 
 # requirements
 - libgrpc (>= 1.45)

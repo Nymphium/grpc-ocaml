@@ -1,5 +1,5 @@
 let server host port =
-  Grpc_server.make_insecure ~host ~port ~middlewares:Middlewares.m Handler.h
+  Grpc_server.make_insecure ~host ~port ~interceptors:Interceptors.m Handler.h
 ;;
 
 let () =

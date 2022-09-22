@@ -65,7 +65,7 @@ module Rpc = struct
   ;;
 end
 
-(** Before handling RPC request, middlewares read context, headers and raw data, and inspect its context
+(** Before handling RPC request, interceptors read context, headers and raw data, and inspect its context
 
 {
 empty |> add @@ fun ctx headers raw_data ->
@@ -73,12 +73,12 @@ empty |> add @@ fun ctx headers raw_data ->
   let ctx' = Ctx.add key val ctx in
   ctx'
 } *)
-module Middlewares = struct
+module Interceptors = struct
   type t = Context.t -> Metadata.bwd -> string option -> Context.t
 
   let empty : t = fun c _ _ -> c
 
-  (** add middleware: read context, headers and raw data, and inspect context
+  (** add interceptor: read context, headers and raw data, and inspect context
    *)
   let add : t -> t -> t =
    fun newm m ctx md data ->
@@ -107,7 +107,7 @@ type t =
   ; mutable state : state
   ; context : Context.t
   ; handlers : handlers
-  ; middlewares : Middlewares.t
+  ; interceptors : Interceptors.t
   }
 
 let is_running t = t.state = `Running
@@ -117,7 +117,7 @@ let assert_not_running =
   fun ?(message = message) t -> if is_running t then failwith message
 ;;
 
-let make args middlewares =
+let make args interceptors =
   Top.init ();
   let args =
     if List.length args > 0 then Some (addr @@ Channel.Args.make args) else None
@@ -131,7 +131,7 @@ let make args middlewares =
   ; state = `Not_started
   ; handlers = Hashtbl.create default_service_handler_size
   ; context = Context.empty
-  ; middlewares
+  ; interceptors
   }
 ;;
 
@@ -228,7 +228,7 @@ let dispatch t (Rpc.{ methd; host; metadata; call; deadline } as rpc) =
     let req = Call.remote_read call in
     let metadata = Metadata.to_bwd metadata in
     let context =
-      t.middlewares t.context metadata req
+      t.interceptors t.context metadata req
       |> Context.(add target methd)
       |> Context.(add host) host
     in

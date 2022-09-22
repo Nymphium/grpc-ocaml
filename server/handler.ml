@@ -1,7 +1,7 @@
 open struct
   module PB = Ocaml_protoc_plugin
   module Context = Grpc_core.Context
-  module Middlewares = Grpc_core.Server.Middlewares
+  module Interceptors = Grpc_core.Server.Interceptors
 
   let default_tags ctx =
     let target' = Context.get_target ctx in

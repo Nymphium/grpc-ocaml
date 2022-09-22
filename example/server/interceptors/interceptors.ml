@@ -1,7 +1,7 @@
 let counter = ref 0
 
 let m =
-  Grpc_server.Middlewares.(
+  Grpc_server.Interceptors.(
     empty
     |> add (fun ctx headers _raw_data ->
            incr counter;
