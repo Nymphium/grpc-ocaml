@@ -473,7 +473,7 @@ in
     grpc = 
     {
       pname = "grpc";
-      version = "0.0.0";
+      version = "0.0.1";
       src = self.directSrc "grpc";
       opamInputs = 
       {
@@ -481,8 +481,7 @@ in
         lwt logs hmap dune ctypes-foreign ctypes;
       };
       opamSrc = "grpc.opam";
-      buildInputs = [ (pkgs.grpc or null) (pkgs.libgrpc-dev or null)
-                       (pkgs.openssl or null) ];
+      buildInputs = [ (pkgs.grpc or null) (pkgs.libgrpc-dev or null) ];
     };
     hmap = 
     {

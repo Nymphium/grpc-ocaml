@@ -3,13 +3,13 @@ synopsis: "gRPC for OCaml"
 maintainer: "Satoru Kawahara <s1311350@gmail.com>"
 authors: ["Satoru Kawahara <s1311350@gmail.com>"]
 license: "MIT"
-version: "0.0.0"
+version: "0.0.1"
 homepage: "https://github.com/Nymphium/grpc-ocaml"
 bug-reports: "https://github.com/Nymphium/grpc-ocaml/issues"
 dev-repo: "git+https://github.com/Nymphium/grpc-ocaml.git"
 depends: [
   "ocaml" {>= "4.13" & < "5.0"}
-  "dune" {< "3.2"} # just for test, to avoid this bug https://github.com/ocaml/dune/issues/5945
+  "dune" {< "3.2" | >= "3.5"} # just for test, to avoid this bug https://github.com/ocaml/dune/issues/5945
   "ctypes"
   "ctypes-foreign"
   "lwt"
@@ -24,10 +24,8 @@ depends: [
 ]
 
 depexts: [
-  ["grpc"] { os-distribution = "nix" }
-  ["grpc"] { os = "macos" & os-distribution = "homebrew" }
+  ["grpc"] { os-distribution = "nix" | ( os = "macos" & os-distribution = "homebrew" ) }
   ["libgrpc-dev"] { os-family = "debian" }
-  ["openssl"] { os-distribution = "nix" } # TODO: WHY THIS PACKAGE NEEDED
 ]
 
 build: ["dune" "build" "--profile" "release" "-j" jobs "-p" name]
