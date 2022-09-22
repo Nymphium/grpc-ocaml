@@ -5,6 +5,20 @@ type raw = t
 
 let raw = t
 
+module O = struct
+  type t
+
+  let t : t structure typ = Ctypes.structure "grpc_ocaml_op_intr"
+  let ops = field t "ops" @@ ptr raw
+  let num = field t "num" int
+  let () = seal t
+end
+
+type u =
+  { ops : raw structure ptr
+  ; num : int
+  }
+
 type bwd =
   [ `Send_initial_metadata of Metadata.bwd
   | `Send_message of string
@@ -27,8 +41,8 @@ let to_op_type = function
   | `Recv_close_on_server -> Type.RECV_CLOSE_ON_SERVER
 ;;
 
-let destroy ops len =
-  let ops = CArray.(from_ptr ops len) in
+let destroy { ops; num } =
+  let ops = CArray.(from_ptr ops num) in
   flip CArray.iter ops
   @@ fun op' ->
   let data = op' @. data in
@@ -112,36 +126,31 @@ let make (bwd : bwd) =
         it
         |-> trailing_metadata_count
         <-@ Unsigned.Size_t.of_int @@ List.length st.metadata)
-    | `Recv_initial_metadata ->
-      let it = data |-> Data.recv_initial_metadata in
-      let metadata = Metadata.allocate () in
-      it |-> Data.Recv_initial_metadata.recv_initial_metadata <-@ metadata
-    | `Recv_status_on_client ->
-      let it = data |-> Data.recv_status_on_client in
-      let tr = Metadata.allocate () in
-      Data.Recv_status_on_client.(it |-> trailing_metadata <-@ tr)
     | _ -> ()
   in
   t
 ;;
 
 let make_ops ops write_flag =
-  let ops' = List.map make ops in
-  List.iter
-    (fun op' ->
-      match op' @.* op with
+  let num = List.length ops in
+  let ops' = CArray.make raw num in
+  List.iteri
+    (fun idx op' ->
+      let op' = make op' in
+      (match op' @.* op with
       | Type.SEND_MESSAGE -> op' @. flags <-@ write_flag
-      | _ -> ())
-    ops';
-  CArray.(start <@ of_list T.Op.t) ops'
+      | _ -> ());
+      CArray.set ops' idx op')
+    ops;
+  { ops = CArray.start ops'; num }
 ;;
 
-let get ops len typ =
+let get ops typ =
   let r = ref None in
   let open CArray in
   (let exception Break in
   try
-    from_ptr ops len
+    from_ptr ops.ops ops.num
     |> iter
        @@ fun op' ->
        let data = op' @.* data in

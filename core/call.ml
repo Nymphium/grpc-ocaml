@@ -9,52 +9,21 @@ module Batch_stack = struct
   type t
 
   let t : t structure typ = Ctypes.structure "grpc_ocaml_run_batch_stack"
-  let ops = Ctypes.field t "ops" @@ ptr Op.t
-  let ops_num = Ctypes.field t "ops_num" int
   let send_metadata = Ctypes.field t "send_metadata" Metadata.t
   let send_trailing_metadata = Ctypes.field t "send_trailing_metadata" Metadata.t
-  let send_status_details = Ctypes.field t "send_status_details" Slice.t
+  let send_status_details = Ctypes.field t "send_status_details" @@ ptr Slice.t
+  let recv_status = Ctypes.field t "recv_status" @@ Status.Code.t
   let recv_initial_metadata = Ctypes.field t "recv_initial_metadata" Metadata.t
   let recv_message = Ctypes.field t "recv_message" @@ ptr Byte_buffer.raw
-  let status = Ctypes.field t "recv_status" @@ Status.Code.t
   let recv_trailing_metadata = Ctypes.field t "recv_trailing_metadata" Metadata.t
-  let recv_status_details = Ctypes.field t "recv_status_details" Slice.t
+  let recv_status_details = Ctypes.field t "recv_status_details" @@ ptr Slice.t
   let error_message = Ctypes.field t "error_message" string
   let cancelled = Ctypes.field t "cancelled" int
   let () = seal t
-
-  let destroy t =
-    (* let destroy_md_with_entries md = *)
-    (* Metadata.destroy_entries *)
-    (* (md |->* Metadata.metadata) *)
-    (* (md |->* Metadata.count |> Unsigned.Size_t.to_int); *)
-    (* Metadata.destroy md *)
-    (* in *)
-    (* destroy_md_with_entries (t |-> send_metadata); *)
-    (* destroy_md_with_entries (t |-> send_trailing_metadata); *)
-    Metadata.destroy (t |-> recv_initial_metadata);
-    Metadata.destroy (t |-> recv_trailing_metadata)
-  ;;
-
-  (* let recv_status_details = t |->* recv_status_details in *)
-  (* if Slice.start_ptr recv_status_details |> (not <@ is_null) *)
-  (* then Slice.unref recv_status_details *)
-
-  (* let recv_message = t |->* recv_message in *)
-  (* if not @@ is_null recv_message then Byte_buffer.destroy recv_message; *)
-  (* CArray.from_ptr (t |->* ops) (t |->* ops_num) *)
-  (* |> CArray.iter *)
-  (* @@ fun op' -> *)
-  (* match op' @.* Op.op with *)
-  (* | Op.Type.SEND_MESSAGE -> *)
-  (* Byte_buffer.destroy *)
-  (* (op' @. Op.data |-> Op.Data.send_message |->* Op.Data.Send_message.send_message) *)
-  (* | _ -> () *)
+  let destroy t = free t
 
   let make_tag_pair () =
     let t = malloc t in
-    Metadata.init (t |-> send_metadata);
-    Metadata.init (t |-> send_trailing_metadata);
     Metadata.init (t |-> recv_initial_metadata);
     Metadata.init (t |-> recv_trailing_metadata);
     let tag = to_voidp t in
@@ -98,8 +67,7 @@ let allocate () = malloc t
 
 (** make call to ["${host}/${method}"], which [host] is [get_target channel] by default.
     If [parent] is not empty, the call is a child call of [parent].
-    [deadline] is inf_future by default.
-   @parm flags TODO: investigate write flag and/or propagate flag? *)
+    [deadline] is inf_future by default. *)
 let make
     ~channel
     ?parent
@@ -143,9 +111,14 @@ let make
   wrap_raw ~cq ~call ~flags ()
 ;;
 
-let run_batch t ?(tag = null) ops ops_num =
+let run_batch t ?(tag = null) ops =
   let err =
-    F.Call.start_batch t.call ops (Unsigned.Size_t.of_int ops_num) tag __reserved__
+    F.Call.start_batch
+      t.call
+      ops.Op.ops
+      (Unsigned.Size_t.of_int ops.Op.num)
+      tag
+      __reserved__
   in
   let () =
     if err <> Error.OK
@@ -153,7 +126,7 @@ let run_batch t ?(tag = null) ops ops_num =
   in
   let inf = Timespec.(inf_future Clock_type.realtime) in
   let ev = Completion_queue.pluck t.cq inf tag in
-  if ev @.* T.Event.success < 1
+  if ev @.* T.Event.success <= 0
   then (
     let st = ev @.* T.Event.typ in
     failwith @@ Printf.sprintf "run_batch failed(%s)" @@ Completion_queue.Type.show st)
@@ -177,17 +150,14 @@ let unary_request ?(metadata = []) ?message t =
     add_msg it
   in
   let ops' = Op.make_ops ops t.flags in
-  let ops_num = List.length ops in
   let recv_message =
-    Op.(
-      get ops' ops_num `Recv_message @. Data.recv_message
-      |-> Data.Recv_message.recv_message)
+    Op.(get ops' `Recv_message @. Data.recv_message |-> Data.Recv_message.recv_message)
   in
   let recv_initial_metadata =
-    Op.(get ops' ops_num `Recv_initial_metadata @. Data.recv_initial_metadata)
+    Op.(get ops' `Recv_initial_metadata @. Data.recv_initial_metadata)
   in
   let recv_status_on_client =
-    Op.(get ops' ops_num `Recv_status_on_client @. Data.recv_status_on_client)
+    Op.(get ops' `Recv_status_on_client @. Data.recv_status_on_client)
   in
   let md =
     recv_initial_metadata |-> Op.Data.Recv_initial_metadata.recv_initial_metadata
@@ -201,52 +171,45 @@ let unary_request ?(metadata = []) ?message t =
   in
   let tr = recv_status_on_client |-> Op.Data.Recv_status_on_client.trailing_metadata in
   let stack, tag = Batch_stack.make_tag_pair () in
-  stack |-> Batch_stack.ops <-@ ops';
-  stack |-> Batch_stack.ops_num <-@ ops_num;
   recv_message <-@ (stack |-> Batch_stack.recv_message);
   md <-@ (stack |-> Batch_stack.recv_initial_metadata);
-  status <-@ (stack |-> Batch_stack.status);
-  status_details <-@ (stack |-> Batch_stack.recv_status_details);
+  status <-@ (stack |-> Batch_stack.recv_status);
+  status_details <-@ (stack |->* Batch_stack.recv_status_details);
   error_string <-@ (stack |-> Batch_stack.error_message);
   tr <-@ (stack |-> Batch_stack.recv_trailing_metadata);
-  let () = run_batch ~tag t ops' ops_num in
+  let () = run_batch ~tag t ops' in
   let status = !@status in
-  let md =
-    let md = Metadata.to_bwd !@md in
-    let tr = Metadata.to_bwd !@tr in
-    tr @ md
-  in
   let status = Status.Code.to_bwd !@status in
   Fun.protect ~finally:(fun () -> Batch_stack.destroy stack)
   @@ fun () ->
   match status with
   | `OK ->
     let recv_message = Byte_buffer.to_string_opt !@(!@recv_message) in
-    Ok (recv_message, md)
+    let md' =
+      let md = Metadata.to_bwd !@md in
+      let tr = Metadata.to_bwd !@tr in
+      tr @ md
+    in
+    Ok (recv_message, md')
   | #Status.Code.fail_bwd as status ->
     let details =
       let slice = !@status_details in
       if is_null slice then None else Some (Slice.to_string !@slice)
     in
-    Error (status, details, md)
+    Error (status, details, Metadata.to_bwd !@md)
 ;;
 
 let remote_read t =
   let ops = [ `Recv_message ] in
-  let ops_num = 1 in
   let ops' = Op.make_ops ops t.flags in
   let recv_message =
-    Op.(
-      get ops' ops_num `Recv_message @. Data.recv_message
-      |-> Data.Recv_message.recv_message)
+    Op.(get ops' `Recv_message @. Data.recv_message |-> Data.Recv_message.recv_message)
   in
   let stack, tag = Batch_stack.make_tag_pair () in
-  stack |-> Batch_stack.ops <-@ ops';
-  stack |-> Batch_stack.ops_num <-@ ops_num;
   recv_message <-@ (stack |-> Batch_stack.recv_message);
   Fun.protect ~finally:(fun () -> Batch_stack.destroy stack)
   @@ fun () ->
-  let () = run_batch ~tag t ops' ops_num in
+  let () = run_batch ~tag t ops' in
   let message = Byte_buffer.to_string_opt !@(!@recv_message) in
   message
 ;;
@@ -266,21 +229,19 @@ let unary_response ?(code = `OK) ?details ?(md = []) ?(tr = []) t res =
       ; `Recv_close_on_server
       ]
   in
-  let ops_num = List.length ops in
   let ops' = Op.make_ops ops t.flags in
   let stack, tag = Batch_stack.make_tag_pair () in
   let send_initial_metadata =
-    Op.(get ops' ops_num `Send_initial_metadata @. Data.send_initial_metadata)
+    Op.(get ops' `Send_initial_metadata @. Data.send_initial_metadata)
   in
   let send_status_from_server =
-    Op.(get ops' ops_num `Send_status_from_server @. Data.send_status_from_server)
+    Op.(get ops' `Send_status_from_server @. Data.send_status_from_server)
   in
   let send_md = send_initial_metadata |-> Op.Data.Send_initial_metadata.metadata in
   let send_md_count = send_initial_metadata |-> Op.Data.Send_initial_metadata.count in
   let send_metadata = stack |-> Batch_stack.send_metadata in
   send_metadata |-> Metadata.metadata <-@ !@send_md;
   send_metadata |-> Metadata.count <-@ !@send_md_count;
-  (* let tr'' = Metadata.make tr in *)
   let send_tr =
     send_status_from_server |->* Op.Data.Send_status_from_server.trailing_metadata
   in
@@ -291,15 +252,16 @@ let unary_response ?(code = `OK) ?details ?(md = []) ?(tr = []) t res =
   send_trailing_metadata |-> Metadata.metadata <-@ send_tr;
   send_trailing_metadata |-> Metadata.count <-@ send_tr_count;
   let recv_close_on_server =
-    Op.(get ops' ops_num `Recv_close_on_server @. Data.recv_close_on_server)
+    Op.(get ops' `Recv_close_on_server @. Data.recv_close_on_server)
   in
   let cancelled = recv_close_on_server |-> Op.Data.Recv_close_on_server.cancelled in
-  stack |-> Batch_stack.ops <-@ ops';
-  stack |-> Batch_stack.ops_num <-@ ops_num;
+  stack
+  |-> Batch_stack.send_status_details
+  <-@ (send_status_from_server |->* Op.Data.Send_status_from_server.status_details);
   cancelled <-@ (stack |-> Batch_stack.cancelled);
   Fun.protect ~finally:(fun () -> Batch_stack.destroy stack)
   @@ fun () ->
-  let () = run_batch ~tag t ops' ops_num in
+  let () = run_batch ~tag t ops' in
   let closed_on_server = !@(!@cancelled) in
   if closed_on_server <= 0
   then Log.message __FILE__ __LINE__ `Info "not (properly) closed request by server"
