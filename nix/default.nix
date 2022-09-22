@@ -14,7 +14,7 @@ let
     in
     { inherit (sources) ocaml-protoc-plugin; }
     // (builtins.listToAttrs
-        (builtins.map (name: { inherit name; value = src'; }) localPackages) );
+        (builtins.map (name': { name = lib.strings.removeSuffix ".opam" name'; value = src'; }) localPackages) );
 
   devPackages = [ "utop" "ocaml-lsp-server" "odoc" ];
 

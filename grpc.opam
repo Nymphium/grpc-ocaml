@@ -29,4 +29,5 @@ depexts: [
 ]
 
 build: ["dune" "build" "--profile" "release" "-j" jobs "-p" name]
+install: ["dune" "build" "--release" "@install"]
 
