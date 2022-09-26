@@ -4,4 +4,3 @@
  (libraries grpc.stub hmap lwt lwt.unix)
  (preprocess
   (pps ppx_deriving.std lwt_ppx)))
-
