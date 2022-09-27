@@ -26,6 +26,7 @@ depends: [
 depexts: [
   ["grpc"] { os-distribution = "nix" | ( os = "macos" & os-distribution = "homebrew" ) }
   ["libgrpc-dev"] { os-family = "debian" }
+  ["openssl"] { os-distribution = "nix" }
 ]
 
 build: ["dune" "build" "--profile" "release" "-j" jobs "-p" name]
