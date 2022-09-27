@@ -1,6 +1,6 @@
 module EchoService = Proto.Grpc_test.Echo
 
-let client = Grpc_client.make ~host:"127.0.0.1" ~port:50051 ()
+let client = Grpc_client.make ~host:"0.0.0.0" ~port:50051 ()
 let _unit = client.unary EchoService.unit' ()
 
 let greet () =
@@ -12,13 +12,10 @@ let () =
   Lwt_main.run
   @@
   let open Lwt.Syntax in
-  let p =
-    Lwt_process.(
-      shell "yarn --offline node index.js" |> exec ~stdout:`Dev_null ~timeout:4.)
-  in
-  let* () = Lwt_unix.sleep 1. in
+  let p = Lwt_process.(shell "node index.js" |> open_process) in
+  let* () = Lwt_unix.sleep 5. in
   let* res = greet () in
-  let* _ = p in
+  let _ = p#terminate in
   match res with
   | Ok (msg, _) ->
     print_endline msg;
