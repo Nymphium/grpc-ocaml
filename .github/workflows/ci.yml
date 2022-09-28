@@ -76,4 +76,5 @@ jobs:
         run: |
           nix-shell --run 'dune runtest stub; \
                            dune runtest server; \
+                           sleep 1; \
                            dune runtest client'

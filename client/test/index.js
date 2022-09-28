@@ -21,7 +21,8 @@ server.addService(proto.grpc_test.Echo.service, { Greet, Unit });
 function run(host, port) {
 
   server.bindAsync(`${host}:${port}`, grpc.ServerCredentials.createInsecure(), (err, result) => {
-    if (!err) { 
+    if (!err) {
+      setTimeout(() => { server.forceShutdown(); }, 10000)
       console.log(`start server ${host}:${port}`);
       server.start();
     } else { 
