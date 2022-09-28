@@ -481,7 +481,8 @@ in
         lwt logs hmap dune ctypes-foreign ctypes;
       };
       opamSrc = "grpc.opam";
-      buildInputs = [ (pkgs.grpc or null) (pkgs.libgrpc-dev or null) ];
+      buildInputs = [ (pkgs.grpc or null) (pkgs.libgrpc-dev or null)
+                       (pkgs.openssl or null) ];
     };
     hmap = 
     {

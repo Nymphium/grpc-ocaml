@@ -73,4 +73,8 @@ jobs:
           authToken: '${{ secrets.CACHIX_SIGNING_KEY }}'
 
       - name: Run tests
-        run: nix-shell --run 'dune runtest'
+        run: |
+          nix-shell --run 'dune runtest stub; \
+                           dune runtest server; \
+                           sleep 1; \
+                           dune runtest client'

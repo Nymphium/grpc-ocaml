@@ -6,7 +6,7 @@
  (files %{project_root}/misc/proto.proto))
 
 (copy_files
-  (files ../settings.ml))
+ (files ../settings.ml))
 
 (rule
  (target proto.ml)

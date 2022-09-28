@@ -1,8 +1,7 @@
 (library
-  (name proto)
-  (modules proto)
-  (libraries ocaml-protoc-plugin)
-  )
+ (name proto)
+ (modules proto)
+ (libraries ocaml-protoc-plugin))
 
 (rule
  (target proto.ml)
