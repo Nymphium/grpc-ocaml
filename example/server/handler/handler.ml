@@ -1,5 +1,7 @@
 module EchoService = Proto.Grpc_test.Echo
 
+let client = Grpc_client.make ~host:"0.0.0.0" ~port:20000 ()
+
 let h t =
   Grpc_server.Handler.(
     let open Grpc_basic.Syntax in
@@ -10,8 +12,8 @@ let h t =
            let@ () =
              Logs_lwt.debug (fun m -> m "x-foo: %s" (Option.value ~default:"<empty>" a))
            in
+           let* _res, _tr = client.Grpc_client.unary EchoService.greet' "Hi" in
            let@ () = Logs_lwt.debug (fun m -> m "request-id: %s" request_id) in
-           (* let@ () = Lwt_unix.sleep 0.1 in *)
            let metadata = [ "x-response", "ok" ] in
            let@ () = Lwt_io.printlf "%d" @@ Grpc_server.Context.get Context.counter ctx in
            ok' ~metadata message)

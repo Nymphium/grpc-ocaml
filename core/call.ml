@@ -58,7 +58,7 @@ type write_flag =
   ]
 
 let destroy { call; cq; _ } =
-  F.Call.unref call;
+  if not @@ is_null call then F.Call.unref call;
   F.Completion_queue.destroy cq
 ;;
 
@@ -82,14 +82,14 @@ let make
     | Some f -> Unsigned.UInt32.of_int f
     | None -> Unsigned.UInt32.zero
   in
-  let host_slice = Slice.from_string host in
+  let host_slice = Slice.from_string ~copy:true host in
   let parent_call =
     match parent with
     | None -> to_voidp null
     | Some parent -> parent.call
   in
   let cq = Completion_queue.create_for_pluck () in
-  let methd_slice = Slice.from_string methd in
+  let methd_slice = Slice.from_string ~copy:true methd in
   let call =
     F.Channel.create_call
       channel.channel
@@ -111,7 +111,7 @@ let make
   wrap_raw ~cq ~call ~flags ()
 ;;
 
-let run_batch t ?(tag = null) ops =
+let run_batch t tag ops =
   let err =
     F.Call.start_batch
       t.call
@@ -177,7 +177,7 @@ let unary_request ?(metadata = []) ?message t =
   status_details <-@ (stack |->* Batch_stack.recv_status_details);
   error_string <-@ (stack |-> Batch_stack.error_message);
   tr <-@ (stack |-> Batch_stack.recv_trailing_metadata);
-  let () = run_batch ~tag t ops' in
+  let () = run_batch t tag ops' in
   let status = !@status in
   let status = Status.Code.to_bwd !@status in
   Fun.protect ~finally:(fun () -> Batch_stack.destroy stack)
@@ -209,7 +209,7 @@ let remote_read t =
   recv_message <-@ (stack |-> Batch_stack.recv_message);
   Fun.protect ~finally:(fun () -> Batch_stack.destroy stack)
   @@ fun () ->
-  let () = run_batch ~tag t ops' in
+  let () = run_batch t tag ops' in
   let message = Byte_buffer.to_string_opt !@(!@recv_message) in
   message
 ;;
@@ -261,7 +261,7 @@ let unary_response ?(code = `OK) ?details ?(md = []) ?(tr = []) t res =
   cancelled <-@ (stack |-> Batch_stack.cancelled);
   Fun.protect ~finally:(fun () -> Batch_stack.destroy stack)
   @@ fun () ->
-  let () = run_batch ~tag t ops' in
+  let () = run_batch t tag ops' in
   let closed_on_server = !@(!@cancelled) in
   if closed_on_server <= 0
   then Log.message __FILE__ __LINE__ `Info "not (properly) closed request by server"

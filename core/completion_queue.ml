@@ -22,7 +22,7 @@ let create_for_pluck () = F.Completion_queue.create_for_pluck __reserved__
 
 let pluck cq timeout tag =
   let next_tic () = Timespec.now_after !tic in
-  let rec go () =
+  let[@tail_cons_mod] rec go () =
     let deadline = next_tic () in
     let ev = F.Completion_queue.pluck cq tag deadline __reserved__ in
     let is_not_timeout = Event.type_of ev <> Type.QUEUE_TIMEOUT in

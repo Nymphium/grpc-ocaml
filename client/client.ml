@@ -23,6 +23,7 @@ and ('req, 'res) unary =
       and type Response.t = 'res)
   -> ?timeout:int
   -> ?request_id:string
+  -> ?parent:Call.t
   -> ?metadata:Metadata.bwd
   -> 'req
   -> 'res Protoiso.res Lwt.t
@@ -41,10 +42,12 @@ let make ~host ~port ?credentials ?(args = []) () =
     let set_request_id =
       Option.(value ~default:id @@ map (fun id -> Headers.add "request_id" id) request_id)
     in
-    fun ?(metadata = []) req ->
+    fun ?parent ?(metadata = []) req ->
       let metadata = Headers.(metadata |> Timeout.set_second timeout) |> set_request_id in
       let body = PB.Writer.contents @@ decoder req in
-      let call = Call.make ~channel ~methd:path () in
+      let call = Call.make ?parent ~channel ~methd:path () in
+      Fun.protect ~finally:(fun () -> Call.destroy call)
+      @@ fun () ->
       Lwt.return @@ Call.unary_request call ~metadata ~message:body
       |> flip Lwt_result.bind
          @@ fun (body, trailers) ->

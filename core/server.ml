@@ -33,12 +33,13 @@ module Request_call_stack = struct
 
   let destroy t =
     Call.Details.destroy (t |->* call_details);
-    free t
+    Metadata.destroy (t |->* metadata)
   ;;
 
-  let make_tag_pair ~call:c ~call_details:cd ~metadata:md =
+  let make_tag_pair () =
     let t = malloc t in
-    t |-> call <-@ c;
+    let cd = Call.Details.allocate () in
+    let md = Metadata.allocate () in
     t |-> call_details <-@ cd;
     t |-> metadata <-@ md;
     let tag = to_voidp t in
@@ -51,7 +52,7 @@ module Rpc = struct
     { host : string
     ; methd : string
     ; deadline : Timespec.t
-    ; metadata : Metadata.raw structure ptr
+    ; metadata : Metadata.bwd
     ; call : Call.t
     }
 
@@ -59,10 +60,7 @@ module Rpc = struct
     { host; methd; deadline; metadata; call }
   ;;
 
-  let destroy { call; metadata; _ } =
-    Call.destroy call;
-    Metadata.destroy metadata
-  ;;
+  let destroy { call; _ } = Call.destroy call
 end
 
 (** Before handling RPC request, interceptors read context, headers and raw data, and inspect its context
@@ -138,11 +136,9 @@ let make args interceptors =
 (** internal use *)
 let request_call t =
   let call = Call.allocate () in
-  let call_details = Call.Details.allocate () in
-  let metadata = Metadata.allocate () in
-  let stack, tag =
-    Request_call_stack.make_tag_pair ~call:!@call ~call_details ~metadata
-  in
+  let stack, tag = Request_call_stack.make_tag_pair () in
+  let call_details = stack |->* Request_call_stack.call_details in
+  let metadata = stack |->* Request_call_stack.metadata in
   let cq = Completion_queue.create_for_pluck () in
   let () = M.assert_exists t.server in
   let err = M.request_call t.server call call_details metadata cq t.cq tag in
@@ -157,7 +153,6 @@ let request_call t =
     then (
       let st = Event.type_of ev in
       failwith (Printf.sprintf "request_call failed(%s)" @@ Completion_queue.Type.show st))
-    (* else Lwt_result.return () *)
   in
   let deadline =
     Timespec.Clock_type.convert
@@ -167,8 +162,8 @@ let request_call t =
   let methd = Slice.to_string (call_details |->* Call.Details.methd) in
   let host = Slice.to_string (call_details |->* Call.Details.host) in
   let call = Call.wrap_raw ~flags:Unsigned.UInt32.zero ~cq ~call:!@call () in
-  Request_call_stack.destroy stack;
-  Rpc.make ~methd ~host ~deadline ~metadata ~call
+  Fun.protect ~finally:(fun () -> Request_call_stack.destroy stack)
+  @@ fun () -> Rpc.make ~methd ~host ~deadline ~metadata:(Metadata.to_bwd metadata) ~call
 ;;
 
 let shutdown t =
@@ -226,7 +221,6 @@ let dispatch t (Rpc.{ methd; host; metadata; call; deadline } as rpc) =
     Log.message __FILE__ __LINE__ `Debug
     @@ Printf.sprintf "handler found { method=%s, host=%s }" methd host;
     let req = Call.remote_read call in
-    let metadata = Metadata.to_bwd metadata in
     let context =
       t.interceptors t.context metadata req
       |> Context.(add target methd)

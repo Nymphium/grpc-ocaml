@@ -1,3 +1,3 @@
 (library
  (name handler)
- (libraries grpc_server proto context))
+ (libraries grpc_server grpc_client proto context))

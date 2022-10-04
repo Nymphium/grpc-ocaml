@@ -15,10 +15,11 @@ let () =
   @@
   let open Lwt.Syntax in
   let* res = send_greet client in
-  let* _res = send_greet client in
-  let* _res = send_greet client in
-  let* _res = send_greet client in
-  let* _res = send_greet client in
+  let* _ = List.init 1000 (fun _ -> send_greet client) |> Lwt.all in
+  (* let* _res = send_greet client in *)
+  (* let* _res = send_greet client in *)
+  (* let* _res = send_greet client in *)
+  (* let* _res = send_greet client in *)
   match res with
   | Ok (msg, _) ->
     let* () = Logs_lwt.debug (fun m -> m "response: %s" msg) in
