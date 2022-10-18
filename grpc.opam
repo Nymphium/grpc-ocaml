@@ -9,7 +9,7 @@ bug-reports: "https://github.com/Nymphium/grpc-ocaml/issues"
 dev-repo: "git+https://github.com/Nymphium/grpc-ocaml.git"
 depends: [
   "ocaml" {>= "4.13" & < "5.0"}
-  "dune" {< "3.2" | >= "3.5"} # just for test, to avoid this bug https://github.com/ocaml/dune/issues/5945
+  "dune" {>= "3.0"}
   "ctypes"
   "ctypes-foreign"
   "lwt"
