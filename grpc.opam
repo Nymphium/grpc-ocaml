@@ -1,8 +1,15 @@
 opam-version: "2.0"
 version: "0.0.0"
+synopsis: "gRPC for OCaml"
+maintainer: "Satoru Kawahara <s1311350@gmail.com>"
+authors: ["Satoru Kawahara <s1311350@gmail.com>"]
+license: "MIT"
+homepage: "https://github.com/Nymphium/grpc-ocaml"
+bug-reports: "https://github.com/Nymphium/grpc-ocaml/issues"
+dev-repo: "git+https://github.com/Nymphium/grpc-ocaml.git"
 depends: [
-  "dune" {< "3.2"}
-  "ocaml"
+  "ocaml" {>= "4.13" & < "5.0"}
+  "dune" {>= "3.0"}
   "core"
   "core_unix"
   "lwt"
