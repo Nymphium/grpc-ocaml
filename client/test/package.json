@@ -4,6 +4,6 @@
   "private": true,
   "dependencies": {
     "@grpc/proto-loader": "0.6.12",
-    "grpc": "1.24.11"
+    "@grpc/grpc-js": "1.7.1"
   }
 }

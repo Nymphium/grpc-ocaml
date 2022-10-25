@@ -1,4 +1,4 @@
-const grpc = require('grpc');
+const grpc = require('@grpc/grpc-js');
 const protoLoader = require('@grpc/proto-loader');
 
 const PROTO_PATH = __dirname + '/proto.proto'
@@ -10,16 +10,27 @@ const Greet = (call, callback) => {
   callback(null, { message: `${call.request.message}` });
 }
 
+const Unit = (call, callback) => {
+  console.log(`received message: ${JSON.stringify(call.request)}`);
+  callback(null, {});
+}
+
 const server = new grpc.Server();
-server.addService(proto.grpc_test.Echo.service, { Greet });
+server.addService(proto.grpc_test.Echo.service, { Greet, Unit });
 
 function run(host, port) {
 
-  server.bind(`${host}:${port}`, grpc.ServerCredentials.createInsecure());
-  console.log(`start server ${host}:${port}`);
-  server.start();
+  server.bindAsync(`${host}:${port}`, grpc.ServerCredentials.createInsecure(), (err, result) => {
+    if (!err) {
+      setTimeout(() => { server.forceShutdown(); }, 10000)
+      console.log(`start server ${host}:${port}`);
+      server.start();
+    } else { 
+      console.error(err);
+     }
+  });
 }
 
-const host = '127.0.0.1';
+const host = '0.0.0.0';
 const port = '50051';
 run(host, port);
