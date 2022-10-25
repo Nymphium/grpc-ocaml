@@ -3,7 +3,7 @@ module Reader = struct
     let io, notifier = Lwt.wait () in
     let buf = Buffer.create 128 in
     let rec go counter =
-      H2.Body.schedule_read
+      H2.Body.Reader.schedule_read
         body
         ~on_read:(fun bigstring ~off ~len ->
           let response_fragment = Bytes.create len in
@@ -64,6 +64,6 @@ let unary handler context reqd =
           |> Tag.downstream_header res.H2.Response.headers)
   in
   H2.Reqd.schedule_trailers reqd trailers;
-  H2.Body.write_string writer msg;
-  H2.Body.close_writer writer
+  H2.Body.Writer.write_string writer msg;
+  H2.Body.Writer.close writer
 ;;

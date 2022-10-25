@@ -46,10 +46,10 @@ let make_response_handler =
   let read_response response_body notify_response_received buf =
     let on_eof () =
       Lwt.wakeup_later notify_response_received ();
-      H2.Body.close_reader response_body
+      H2.Body.Reader.close response_body
     in
     let rec go () =
-      H2.Body.schedule_read
+      H2.Body.Reader.schedule_read
         response_body
         ~on_read:(fun bigstring ~off ~len ->
           let response_fragment = Bytes.create len in
@@ -102,8 +102,8 @@ let call conn uri ?(headers = Grpc_basic.Headers.empty) body =
   let request_body =
     H2_lwt_unix.Client.request conn req ~error_handler ~response_handler ~trailers_handler
   in
-  let () = H2.Body.write_string request_body body in
-  let () = H2.Body.close_writer request_body in
+  let () = H2.Body.Writer.write_string request_body body in
+  let () = H2.Body.Writer.close request_body in
   let%lwt () = response_received in
   let () =
     Lwt.async

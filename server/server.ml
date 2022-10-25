@@ -63,12 +63,12 @@ open struct
 
   let error_handler _client_addr ?request:_ error start_response =
     let response_body = start_response Grpc_basic.Headers.empty in
-    H2.Body.write_string
+    H2.Body.Writer.write_string
       response_body
       (match error with
       | `Exn exn -> Printexc.to_string exn
       | #H2.Status.standard as error -> H2.Status.default_reason_phrase error);
-    H2.Body.close_writer response_body
+    H2.Body.Writer.close response_body
   ;;
 end
 

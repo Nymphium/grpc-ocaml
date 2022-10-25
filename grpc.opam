@@ -16,7 +16,7 @@ depends: [
   "hmap"
   "logs"
   "uri"
-  "h2-lwt-unix"
+  "h2-lwt-unix" { >= "0.9" }
   "ocaml-protoc-plugin"
   "conf-protoc" { with-test }
   "lwt_ssl"
