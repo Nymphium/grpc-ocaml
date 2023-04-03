@@ -43,7 +43,7 @@ Unary.add rpc @@ fun ctx req md ->
         let%lwt () =
           Logs_lwt.debug ~src:Log.default
           @@ fun m ->
-          let tags = default_tags context |> Log.Tag.upstream_header metadata in
+          let tags = default_tags context |> Log.Tag.upstream_headers metadata in
           m ~tags ~header:Log.header "get request on %s" methd
         in
         let%lwt res = handler context metadata call request in
